@@ -29,10 +29,8 @@ const Login = () => {
 
       if (response.data.status === 200 && response.data.data) {
         // Salvar token no localStorage
-        const { token, user } = response.data.data;
+        const { token } = response.data.data;
         localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
         // Redirecionar para a página inicial
         navigate('/');
       } else {

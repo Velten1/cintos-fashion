@@ -29,3 +29,10 @@ export const findUserById = async (id: string) => {
         where: { id: id }
     })
 }
+
+export const getUserRole = async (id: string) => {
+    return await prisma.user.findUnique({
+        where: { id: id },
+        select: { role: true }
+    })
+}

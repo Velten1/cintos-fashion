@@ -1,10 +1,30 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SearchBar from './SearchBar.tsx';
+import { getCurrentUser } from '../services/authServices';
 
 const Navbar = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await getCurrentUser();
+          if (response.data.status === 200 && response.data.data) {
+            setIsAdmin(response.data.data.role === 'ADMIN');
+          }
+        } catch (error) {
+          // Token inválido ou expirado
+          setIsAdmin(false);
+        }
+      }
+    };
+    checkUser();
+  }, []);
 
   const navLinks = [
     { path: '/', label: 'Início' },
@@ -52,6 +72,14 @@ const Navbar = () => {
 
           {/* Auth Buttons - Desktop */}
           <div className="hidden md:flex items-center gap-3 ml-4">
+            {isAdmin && (
+              <Link
+                to="/admin/produtos/cadastrar"
+                className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors"
+              >
+                Cadastrar Produtos
+              </Link>
+            )}
             <Link
               to="/login"
               className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors"
