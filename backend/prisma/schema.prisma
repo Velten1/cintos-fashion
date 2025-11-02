@@ -41,7 +41,7 @@ model User {
   email     String   @unique
   password  String
   phone     String?
-  cpfCnpj   String?  @map("cpf_cnpj")
+  cpfCnpj   String?  @unique     @map("cpf_cnpj")
   address   Json?
   role      UserRole @default(CLIENT)
   createdAt DateTime @default(now()) @map("created_at")
@@ -178,4 +178,3 @@ model Notification {
 
   @@map("notifications")
 }
-
