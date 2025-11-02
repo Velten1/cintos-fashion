@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaUser, FaPhone } from 'react-icons/fa';
+import { register } from '../services/authServices';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -8,21 +9,51 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     nome: '',
+    cpfCnpj: '',
     email: '',
     telefone: '',
     password: '',
     confirmPassword: '',
   });
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    
     if (formData.password !== formData.confirmPassword) {
-      alert('As senhas não coincidem');
+      setError('As senhas não coincidem');
       return;
     }
-    // Lógica de registro aqui (sem backend por enquanto)
-    console.log('Register:', formData);
-    navigate('/');
+
+    if (!formData.cpfCnpj) {
+      setError('CPF/CNPJ é obrigatório');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await register({
+        name: formData.nome,
+        cpfCnpj: formData.cpfCnpj,
+        email: formData.email,
+        phone: formData.telefone,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+      });
+
+      if (response.data.status === 201) {
+        navigate('/login');
+      } else {
+        setError(response.data.message || 'Erro ao criar conta');
+      }
+    } catch (error: any) {
+      setError(error.response?.data?.message || 'Erro ao criar conta. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,6 +149,11 @@ const Register = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3.5">
+              {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
               {/* Nome */}
               <div>
                 <label htmlFor="nome" className="block text-xs font-medium text-dark mb-1.5">
@@ -136,6 +172,28 @@ const Register = () => {
                     required
                     className="w-full pl-10 pr-3 py-2.5 text-sm bg-white/60 border border-blue/20 rounded-lg text-dark placeholder-slate/60 focus:outline-none focus:ring-2 focus:ring-dark/20 focus:border-blue/40 transition-all duration-200"
                     placeholder="Seu nome completo"
+                  />
+                </div>
+              </div>
+
+              {/* CPF/CNPJ */}
+              <div>
+                <label htmlFor="cpfCnpj" className="block text-xs font-medium text-dark mb-1.5">
+                  CPF/CNPJ
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FaUser className="text-slate/50 text-sm" />
+                  </div>
+                  <input
+                    type="text"
+                    id="cpfCnpj"
+                    name="cpfCnpj"
+                    value={formData.cpfCnpj}
+                    onChange={handleChange}
+                    required
+                    className="w-full pl-10 pr-3 py-2.5 text-sm bg-white/60 border border-blue/20 rounded-lg text-dark placeholder-slate/60 focus:outline-none focus:ring-2 focus:ring-dark/20 focus:border-blue/40 transition-all duration-200"
+                    placeholder="000.000.000-00 ou 00.000.000/0000-00"
                   />
                 </div>
               </div>
@@ -266,9 +324,10 @@ const Register = () => {
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full py-2.5 bg-dark text-light rounded-lg font-semibold hover:bg-slate transition-all duration-300 hover:scale-[1.02] shadow-lg shadow-dark/20 border-2 border-dark/50 text-sm mt-2"
+                disabled={loading}
+                className="w-full py-2.5 bg-dark text-light rounded-lg font-semibold hover:bg-slate transition-all duration-300 hover:scale-[1.02] shadow-lg shadow-dark/20 border-2 border-dark/50 text-sm mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Criar conta
+                {loading ? 'Criando conta...' : 'Criar conta'}
               </button>
             </form>
 
