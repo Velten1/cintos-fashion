@@ -77,13 +77,23 @@ const Navbar = () => {
 
           {/* Auth Buttons - Desktop */}
           <div className="hidden md:flex items-center gap-3 ml-4">
-            {isAdmin && (
-              <Link
-                to="/admin/produtos/cadastrar"
-                className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors"
-              >
-                Cadastrar Produtos
-              </Link>
+            {isAuthenticated && (
+              <>
+                {isAdmin && (
+                  <Link
+                    to="/admin/produtos/cadastrar"
+                    className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors"
+                  >
+                    Cadastrar Produtos
+                  </Link>
+                )}
+                <Link
+                  to="/perfil"
+                  className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors"
+                >
+                  Perfil
+                </Link>
+              </>
             )}
             {!isAuthenticated && (
               <>
@@ -154,6 +164,26 @@ const Navbar = () => {
               </Link>
             ))}
             <div className="pt-4 border-t border-blue/30 space-y-2">
+              {isAuthenticated && (
+                <>
+                  {isAdmin && (
+                    <Link
+                      to="/admin/produtos/cadastrar"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="block px-4 py-2 rounded-lg text-sm font-medium text-slate hover:bg-blue/30 hover:text-dark transition-all duration-200"
+                    >
+                      Cadastrar Produtos
+                    </Link>
+                  )}
+                  <Link
+                    to="/perfil"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-4 py-2 rounded-lg text-sm font-medium text-slate hover:bg-blue/30 hover:text-dark transition-all duration-200"
+                  >
+                    Perfil
+                  </Link>
+                </>
+              )}
               {!isAuthenticated && (
                 <>
                   <Link

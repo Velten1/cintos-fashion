@@ -4,3 +4,4 @@ export { default as Catalog } from './Catalog';
 export { default as ProductDetails } from './ProductDetails';
 export { default as Login } from './Login';
 export { default as Register } from './Register';
+export { default as Profile } from './Profile';

@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import DefaultLayout from './components/DefaultLayout';
-import { Home, Catalog, ProductDetails, Login, Register } from './pages';
+import { Home, Catalog, ProductDetails, Login, Register, Profile } from './pages';
 import './App.css';
 
 function App() {
@@ -11,6 +11,7 @@ function App() {
         <Route path="/" element={<DefaultLayout><Home /></DefaultLayout>} />
         <Route path="/catalogo" element={<DefaultLayout><Catalog /></DefaultLayout>} />
         <Route path="/produto/:id" element={<DefaultLayout><ProductDetails /></DefaultLayout>} />
+        <Route path="/perfil" element={<DefaultLayout><Profile /></DefaultLayout>} />
         
         {/* Rotas sem layout padrão (tela cheia) */}
         <Route path="/login" element={<Login />} />
