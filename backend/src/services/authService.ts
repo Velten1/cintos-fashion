@@ -1,4 +1,4 @@
-import { findUserByEmail, findUserByCpfCnpj, createUser } from "../repository/authRepository"
+import { findUserByEmail, findUserByCpfCnpj, createUser, generateToken } from "../repository/authRepository"
 import bcrypt from "bcrypt"
 import { 
     validateAndNormalizeEmail, 
@@ -76,5 +76,39 @@ export const registerUserService = async (
 
     const { password: _, ...userWithoutPassword } = newUser
     return { status: 201, data: userWithoutPassword}
+}
+
+export const loginUserService = async(
+    email: string,
+    password: string
+) => {
+    // Normalizar e validar email
+    const emailValidation = validateAndNormalizeEmail(email)
+    if (!emailValidation.isValid || !emailValidation.normalized) {
+        return { status: 400, message: "Email inválido. Por favor, informe um email válido." }
+    }
+    const normalizedEmail = emailValidation.normalized
+
+    // Validação de senha
+    if (!password || password.length === 0) {
+        return { status: 400, message: "Senha é obrigatória." }
+    }
+
+    // Buscar usuário pelo email normalizado
+    const user = await findUserByEmail(normalizedEmail)
+    if (!user) {
+        return { status: 401, message: "Email ou senha inválidos." }
+    }
+
+    // Verificar senha
+    const isPasswordValid = await bcrypt.compare(password, user.password)
+    if (!isPasswordValid) {
+        return { status: 401, message: "Email ou senha inválidos." }
+    }
+    
+    // Gerar token JWT
+    const token = await generateToken(user.id)
+    const {password: _, ...userWithoutPassword} = user
+    return { status: 200, data: {user: userWithoutPassword, token}}
 }
 

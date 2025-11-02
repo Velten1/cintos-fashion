@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { registerUserService } from "../services/authService";
+import { loginUserService, registerUserService } from "../services/authService";
 
 export const registerUserController = async (req: Request, res: Response) => {
     try {
@@ -19,5 +19,20 @@ export const registerUserController = async (req: Request, res: Response) => {
         }
 
         return res.status(500).json({ message: "Erro ao registrar usuário", error: error.message })
+    }
+}
+
+export const loginUserController = async (req: Request, res: Response) => {
+    try {
+        const { email, password } = req.body
+        if (!email || !password) {
+            return res.status(400).json({ message: "Todos os campos são obrigatórios"})
+        }
+
+        const response = await loginUserService(email, password)
+        return res.status(response.status).json(response)
+    } catch (error: any) {
+        console.error("Erro ao fazer login", error)
+        return res.status(500).json({ message: "Erro ao fazer login", error: error.message })
     }
 }
