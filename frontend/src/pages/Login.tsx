@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { login } from '../services/authServices';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -9,12 +10,39 @@ const Login = () => {
     email: '',
     password: '',
   });
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Lógica de login aqui (sem backend por enquanto)
-    console.log('Login:', formData);
-    navigate('/');
+    setError(null);
+
+    if (!formData.email || !formData.password) {
+      setError('Por favor, preencha todos os campos');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await login(formData.email, formData.password);
+
+      if (response.data.status === 200 && response.data.data) {
+        // Salvar token no localStorage
+        const { token, user } = response.data.data;
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        // Redirecionar para a página inicial
+        navigate('/');
+      } else {
+        setError(response.data.message || 'Erro ao fazer login');
+      }
+    } catch (error: any) {
+      setError(error.response?.data?.message || 'Erro ao fazer login. Verifique suas credenciais.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,6 +135,11 @@ const Login = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl text-sm">
+                  {error}
+                </div>
+              )}
               {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-dark mb-2">
@@ -178,9 +211,10 @@ const Login = () => {
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full py-3.5 bg-dark text-light rounded-xl font-semibold hover:bg-slate transition-all duration-300 hover:scale-[1.02] shadow-lg shadow-dark/20 border-2 border-dark/50"
+                disabled={loading}
+                className="w-full py-3.5 bg-dark text-light rounded-xl font-semibold hover:bg-slate transition-all duration-300 hover:scale-[1.02] shadow-lg shadow-dark/20 border-2 border-dark/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Entrar
+                {loading ? 'Entrando...' : 'Entrar'}
               </button>
             </form>
 
