@@ -7,4 +7,175 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  CLIENT
+  ADMIN
+}
+
+enum OrderStatus {
+  RECEIVED
+  PRODUCTION
+  FINISHED
+  ON_THE_WAY
+  DELIVERED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  phone     String?
+  cpfCnpj   String?  @map("cpf_cnpj")
+  address   Json?
+  role      UserRole @default(CLIENT)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  orders        Order[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  imageUrl    String?  @map("image_url")
+  basePrice   Decimal  @map("base_price") @db.Decimal(10, 2)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  orderItems  OrderItem[]
+  priceRules  PriceRule[]
+
+  @@map("products")
+}
+
+model Order {
+  id            String        @id @default(uuid())
+  userId        String        @map("user_id")
+  totalAmount    Decimal       @map("total_amount") @db.Decimal(10, 2)
+  status        OrderStatus   @default(RECEIVED)
+  paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
+  paymentMethod String?       @map("payment_method")
+  installments  Int?
+  nfNumber      String?       @map("nf_number")
+  trackingCode  String?       @map("tracking_code")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items         OrderItem[]
+  fabrics       Fabric[]
+  statusHistory StatusHistory[]
+  notifications Notification[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  orderId    String   @map("order_id")
+  productId  String   @map("product_id")
+  fabricType String   @map("fabric_type")
+  quantity   Int
+  unitPrice  Decimal  @map("unit_price") @db.Decimal(10, 2)
+  subtotal   Decimal  @db.Decimal(10, 2)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model Fabric {
+  id            String      @id @default(uuid())
+  orderId       String      @map("order_id")
+  qrCode        String      @unique @map("qr_code")
+  qrCodeImageUrl String?    @map("qr_code_image_url")
+  status        OrderStatus @default(RECEIVED)
+  notes         String?
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  order         Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  statusHistory StatusHistory[]
+
+  @@map("fabrics")
+}
+
+model StatusHistory {
+  id        String      @id @default(uuid())
+  orderId   String      @map("order_id")
+  fabricId  String?     @map("fabric_id")
+  status    OrderStatus
+  updatedBy String?     @map("updated_by")
+  notes     String?
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  order  Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fabric Fabric? @relation(fields: [fabricId], references: [id], onDelete: Cascade)
+
+  @@map("status_history")
+}
+
+model PriceRule {
+  id         String   @id @default(uuid())
+  productId  String   @map("product_id")
+  fabricType String?
+  minQuantity Int     @map("min_quantity")
+  maxQuantity Int?    @map("max_quantity")
+  price      Decimal  @db.Decimal(10, 2)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("price_rules")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  orderId   String?  @map("order_id")
+  type      String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
 
