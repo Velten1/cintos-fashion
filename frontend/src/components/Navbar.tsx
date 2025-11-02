@@ -7,6 +7,7 @@ const Navbar = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -15,12 +16,16 @@ const Navbar = () => {
         try {
           const response = await getCurrentUser();
           if (response.data.status === 200 && response.data.data) {
+            setIsAuthenticated(true);
             setIsAdmin(response.data.data.role === 'ADMIN');
           }
         } catch (error) {
           // Token inválido ou expirado
+          setIsAuthenticated(false);
           setIsAdmin(false);
         }
+      } else {
+        setIsAuthenticated(false);
       }
     };
     checkUser();
@@ -40,7 +45,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group">
-            <div className="text-2xl font-bold bg-gradient-to-r from-dark to-slate bg-clip-text text-transparent">
+            <div className="text-2xl font-bold bg-gradient-to-r from-dark to-slate bg-clip-text text-black">
               CINTOS
             </div>
             <div className="text-xs text-slate font-light tracking-wider">
@@ -80,18 +85,22 @@ const Navbar = () => {
                 Cadastrar Produtos
               </Link>
             )}
-            <Link
-              to="/login"
-              className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors"
-            >
-              Entrar
-            </Link>
-            <Link
-              to="/registro"
-              className="px-4 py-2.5 bg-dark text-light text-sm font-semibold rounded-lg hover:bg-slate transition-all duration-300"
-            >
-              Cadastrar
-            </Link>
+            {!isAuthenticated && (
+              <>
+                <Link
+                  to="/login"
+                  className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors"
+                >
+                  Entrar
+                </Link>
+                <Link
+                  to="/registro"
+                  className="px-4 py-2.5 bg-dark text-light text-sm font-semibold rounded-lg hover:bg-slate transition-all duration-300"
+                >
+                  Cadastrar
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -145,20 +154,24 @@ const Navbar = () => {
               </Link>
             ))}
             <div className="pt-4 border-t border-blue/30 space-y-2">
-              <Link
-                to="/login"
-                onClick={() => setIsMenuOpen(false)}
-                className="block px-4 py-2 rounded-lg text-sm font-medium text-slate hover:bg-blue/30 hover:text-dark transition-all duration-200"
-              >
-                Entrar
-              </Link>
-              <Link
-                to="/registro"
-                onClick={() => setIsMenuOpen(false)}
-                className="block px-4 py-2.5 bg-dark text-light text-sm font-semibold rounded-lg hover:bg-slate transition-all duration-300 text-center"
-              >
-                Cadastrar
-              </Link>
+              {!isAuthenticated && (
+                <>
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-4 py-2 rounded-lg text-sm font-medium text-slate hover:bg-blue/30 hover:text-dark transition-all duration-200"
+                  >
+                    Entrar
+                  </Link>
+                  <Link
+                    to="/registro"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-4 py-2.5 bg-dark text-light text-sm font-semibold rounded-lg hover:bg-slate transition-all duration-300 text-center"
+                  >
+                    Cadastrar
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}
