@@ -1,0 +1,143 @@
+import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import SearchBar from './SearchBar.tsx';
+
+const Navbar = () => {
+  const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const navLinks = [
+    { path: '/', label: 'Início' },
+    { path: '/catalogo', label: 'Catálogo' },
+    { path: '/catalogo?categoria=cintos', label: 'Cintos' },
+    { path: '/catalogo?categoria=fivelas', label: 'Fivelas' },
+    { path: '/catalogo?categoria=acessorios', label: 'Acessórios' },
+  ];
+
+  return (
+    <nav className="sticky top-0 z-50 backdrop-blur-md bg-light/80 border-b border-blue/30 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-20">
+          {/* Logo */}
+          <Link to="/" className="flex items-center space-x-2 group">
+            <div className="text-2xl font-bold bg-gradient-to-r from-dark to-slate bg-clip-text text-transparent">
+              CINTOS
+            </div>
+            <div className="text-xs text-slate font-light tracking-wider">
+              FASHION
+            </div>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-1 flex-1 justify-center">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  location.pathname === link.path.split('?')[0]
+                    ? 'bg-dark/10 text-dark backdrop-blur-sm'
+                    : 'text-slate hover:bg-blue/30 hover:text-dark'
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Search Bar - Desktop */}
+          <div className="hidden lg:block w-80">
+            <SearchBar />
+          </div>
+
+          {/* Auth Buttons - Desktop */}
+          <div className="hidden md:flex items-center gap-3 ml-4">
+            <Link
+              to="/login"
+              className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors"
+            >
+              Entrar
+            </Link>
+            <Link
+              to="/registro"
+              className="px-4 py-2.5 bg-dark text-light text-sm font-semibold rounded-lg hover:bg-slate transition-all duration-300"
+            >
+              Cadastrar
+            </Link>
+          </div>
+
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden p-2 rounded-lg text-slate hover:bg-blue/30 transition-colors"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              {isMenuOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden pb-4 space-y-2">
+            <div className="mb-4">
+              <SearchBar />
+            </div>
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                onClick={() => setIsMenuOpen(false)}
+                className={`block px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  location.pathname === link.path.split('?')[0]
+                    ? 'bg-dark/10 text-dark backdrop-blur-sm'
+                    : 'text-slate hover:bg-blue/30 hover:text-dark'
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+            <div className="pt-4 border-t border-blue/30 space-y-2">
+              <Link
+                to="/login"
+                onClick={() => setIsMenuOpen(false)}
+                className="block px-4 py-2 rounded-lg text-sm font-medium text-slate hover:bg-blue/30 hover:text-dark transition-all duration-200"
+              >
+                Entrar
+              </Link>
+              <Link
+                to="/registro"
+                onClick={() => setIsMenuOpen(false)}
+                className="block px-4 py-2.5 bg-dark text-light text-sm font-semibold rounded-lg hover:bg-slate transition-all duration-300 text-center"
+              >
+                Cadastrar
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+};
+
+export default Navbar;
+
