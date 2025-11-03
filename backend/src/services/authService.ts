@@ -1,4 +1,4 @@
-import { findUserByEmail, findUserByCpfCnpj, createUser, generateToken } from "../repository/authRepository"
+import { findUserByEmail, findUserByCpfCnpj, createUser, generateToken, editUser, findUserById } from "../repository/authRepository"
 import bcrypt from "bcrypt"
 import { 
     validateAndNormalizeEmail, 
@@ -110,5 +110,83 @@ export const loginUserService = async(
     const token = await generateToken(user.id)
     const {password: _, ...userWithoutPassword} = user
     return { status: 200, data: {user: userWithoutPassword, token}}
+}
+
+export const editUserService = async (id: string, userData: any) => {
+    const userDataToUpdate: any = {}
+
+    // Validação e atualização de nome (se fornecido)
+    if (userData.name !== undefined) {
+        if (!userData.name || !userData.name.trim()) {
+            return { status: 400, message: "Nome é obrigatório." }
+        }
+        userDataToUpdate.name = userData.name.trim()
+    }
+
+    // Validação e atualização de CPF/CNPJ (se fornecido)
+    if (userData.cpfCnpj !== undefined) {
+        const cpfCnpjValidation = validateAndNormalizeCPFCNPJ(userData.cpfCnpj)
+        if (!cpfCnpjValidation.isValid || !cpfCnpjValidation.normalized) {
+            return { status: 400, message: "CPF/CNPJ inválido. Por favor, informe um CPF ou CNPJ válido." }
+        }
+        const normalizedCpfCnpj = cpfCnpjValidation.normalized
+
+        // Validar CNPJ com API se for CNPJ
+        if (cpfCnpjValidation.type === 'CNPJ') {
+            const cnpjApiValidation = await validateCNPJWithAPI(normalizedCpfCnpj)
+            if (!cnpjApiValidation.exists) {
+                return { status: 400, message: "CNPJ não encontrado. Por favor, verifique se o CNPJ está correto." }
+            }
+            if (!cnpjApiValidation.isActive) {
+                return { status: 400, message: "CNPJ não está ativo. Apenas empresas ativas podem atualizar o cadastro." }
+            }
+        }
+
+        // Verificar se CPF/CNPJ já está em uso por outro usuário
+        const existingUserByCpfCnpj = await findUserByCpfCnpj(normalizedCpfCnpj)
+        if (existingUserByCpfCnpj && existingUserByCpfCnpj.id !== id) {
+            return { status: 400, message: "CPF/CNPJ já cadastrado." }
+        }
+
+        userDataToUpdate.cpfCnpj = normalizedCpfCnpj
+    }
+
+    // Validação e atualização de email (se fornecido)
+    if (userData.email !== undefined) {
+        const emailValidation = validateAndNormalizeEmail(userData.email)
+        if (!emailValidation.isValid || !emailValidation.normalized) {
+            return { status: 400, message: "Email inválido. Por favor, informe um email válido." }
+        }
+        const normalizedEmail = emailValidation.normalized
+
+        // Verificar se email já está em uso por outro usuário
+        const existingUserByEmail = await findUserByEmail(normalizedEmail)
+        if (existingUserByEmail && existingUserByEmail.id !== id) {
+            return { status: 400, message: "Email já está em uso." }
+        }
+
+        userDataToUpdate.email = normalizedEmail
+    }
+
+    // Validação e atualização de telefone (se fornecido)
+    if (userData.phone !== undefined) {
+        const phoneValidation = validateAndNormalizePhone(userData.phone)
+        if (!phoneValidation.isValid || !phoneValidation.normalized) {
+            return { status: 400, message: "Telefone inválido. Por favor, informe um telefone válido (formato brasileiro)." }
+        }
+        userDataToUpdate.phone = phoneValidation.normalized
+    }
+
+    // Se nenhum campo foi fornecido
+    if (Object.keys(userDataToUpdate).length === 0) {
+        return { status: 400, message: "Nenhum campo foi fornecido para atualização." }
+    }
+
+    // Atualizar usuário apenas com os campos fornecidos
+    const updatedUser = await editUser(id, userDataToUpdate)
+
+    // Remover senha antes de retornar
+    const { password: _, ...userWithoutPassword } = updatedUser
+    return { status: 200, data: userWithoutPassword }
 }
 

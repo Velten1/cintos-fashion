@@ -36,3 +36,10 @@ export const getUserRole = async (id: string) => {
         select: { role: true }
     })
 }
+
+export const editUser = async (id: string, userData: any) => {
+    return await prisma.user.update({
+        where: { id: id },
+        data: userData
+    })
+}

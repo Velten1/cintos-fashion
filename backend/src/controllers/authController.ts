@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { loginUserService, registerUserService } from "../services/authService";
+import { loginUserService, registerUserService, editUserService } from "../services/authService";
 import { findUserById } from "../repository/authRepository";
 
 export const registerUserController = async (req: Request, res: Response) => {
@@ -41,12 +41,15 @@ export const loginUserController = async (req: Request, res: Response) => {
                 maxAge: 3600000     
             });
             
-            // Remover token do body da resposta por segurança
+            /* Remover token do body da resposta por segurança
             const { token, ...responseWithoutToken } = response.data;
             return res.status(response.status).json({ 
                 status: response.status, 
                 data: responseWithoutToken 
-            });
+            }); */
+            
+            // Retornar resposta completa incluindo token para testes (Postman)
+            return res.status(response.status).json(response)
         }
         
         return res.status(response.status).json(response)
@@ -91,3 +94,35 @@ export const logoutController = async (req: Request, res: Response) => {
         return res.status(500).json({ message: "Erro ao fazer logout", error: error.message })
     }
 }
+
+export const editUserController = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).userId
+        if (!userId) {
+            return res.status(401).json({ message: "Token não fornecido" })
+        }
+
+        const userData = req.body
+
+        // Verificar se pelo menos um campo foi fornecido
+        const allowedFields = ['name', 'email', 'phone', 'cpfCnpj']
+        const hasValidField = allowedFields.some(field => userData[field] !== undefined)
+        
+        if (!hasValidField) {
+            return res.status(400).json({ message: "Nenhum campo válido foi fornecido para atualização" })
+        }
+
+        const response = await editUserService(userId, userData)
+        return res.status(response.status).json(response)
+    } catch (error: any) {
+        console.error("Erro ao atualizar usuário", error)
+
+        if (error.code === "P2002") {
+            const field = error.meta?.target?.[0] || 'campo'
+            return res.status(400).json({ message: `O ${field} já está em uso` })
+        }
+
+        return res.status(500).json({ message: "Erro ao atualizar usuário", error: error.message })
+    }
+}
+
