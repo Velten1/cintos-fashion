@@ -28,9 +28,7 @@ const Login = () => {
       const response = await login(formData.email, formData.password);
 
       if (response.data.status === 200 && response.data.data) {
-        // Salvar token no localStorage
-        const { token } = response.data.data;
-        localStorage.setItem('token', token);
+        // Token foi salvo em cookie httpOnly pelo backend
         // Redirecionar para a página inicial
         navigate('/');
       } else {

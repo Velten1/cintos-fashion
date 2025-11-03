@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaPhone, FaIdCard, FaSignOutAlt } from 'react-icons/fa';
-import { getCurrentUser } from '../services/authServices';
+import { getCurrentUser, logout } from '../services/authServices';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -11,21 +11,15 @@ const Profile = () => {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
       try {
         const response = await getCurrentUser();
         if (response.data.status === 200 && response.data.data) {
           setUser(response.data.data);
+        } else {
+          navigate('/login');
         }
       } catch (error: any) {
         setError('Erro ao carregar dados do usuário');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
         navigate('/login');
       } finally {
         setLoading(false);
@@ -35,9 +29,12 @@ const Profile = () => {
     fetchUser();
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      // Continuar mesmo se der erro
+    }
     navigate('/login');
   };
 
@@ -84,7 +81,7 @@ const Profile = () => {
               </div>
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 bg-light/20 hover:bg-light/30 rounded-lg flex items-center gap-2 transition-all duration-200"
+                className="px-4 py-2 bg-light/20 hover:bg-light/30 rounded-lg flex items-center gap-2 transition-all duration-200 cursor-pointer"
               >
                 <FaSignOutAlt />
                 <span>Sair</span>

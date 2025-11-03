@@ -16,10 +16,9 @@ export const login = async (email: string, password: string) => {
 }
 
 export const getCurrentUser = async () => {
-    const token = localStorage.getItem('token');
-    return await api.get("/auth/me", {
-        headers: {
-            Authorization: `Bearer ${token}`
-        }
-    });
+    return await api.get("/auth/me");
+}
+
+export const logout = async () => {
+    return await api.post("/auth/logout");
 }

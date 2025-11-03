@@ -31,6 +31,24 @@ export const loginUserController = async (req: Request, res: Response) => {
         }
 
         const response = await loginUserService(email, password)
+        
+        // Se login bem-sucedido, salvar token em cookie httpOnly
+        if (response.status === 200 && response.data?.token) {
+            res.cookie('token', response.data.token, {
+                httpOnly: true,     
+                secure: process.env.NODE_ENV === 'production', 
+                sameSite: 'strict',  
+                maxAge: 3600000     
+            });
+            
+            // Remover token do body da resposta por segurança
+            const { token, ...responseWithoutToken } = response.data;
+            return res.status(response.status).json({ 
+                status: response.status, 
+                data: responseWithoutToken 
+            });
+        }
+        
         return res.status(response.status).json(response)
     } catch (error: any) {
         console.error("Erro ao fazer login", error)
@@ -56,5 +74,20 @@ export const getUserController = async (req: Request, res: Response) => {
     } catch (error: any) {
         console.error("Erro ao buscar usuário", error)
         return res.status(500).json({ message: "Erro ao buscar usuário", error: error.message })
+    }
+}
+
+export const logoutController = async (req: Request, res: Response) => {
+    try {
+        // Limpar cookie do token
+        res.clearCookie('token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict'
+        });
+        return res.status(200).json({ status: 200, message: 'Logout realizado com sucesso' });
+    } catch (error: any) {
+        console.error("Erro ao fazer logout", error)
+        return res.status(500).json({ message: "Erro ao fazer logout", error: error.message })
     }
 }

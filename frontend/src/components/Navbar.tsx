@@ -11,21 +11,19 @@ const Navbar = () => {
 
   useEffect(() => {
     const checkUser = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const response = await getCurrentUser();
-          if (response.data.status === 200 && response.data.data) {
-            setIsAuthenticated(true);
-            setIsAdmin(response.data.data.role === 'ADMIN');
-          }
-        } catch (error) {
-          // Token inválido ou expirado
+      try {
+        const response = await getCurrentUser();
+        if (response.data.status === 200 && response.data.data) {
+          setIsAuthenticated(true);
+          setIsAdmin(response.data.data.role === 'ADMIN');
+        } else {
           setIsAuthenticated(false);
           setIsAdmin(false);
         }
-      } else {
+      } catch (error) {
+        // Token inválido ou expirado, ou cookie não existe
         setIsAuthenticated(false);
+        setIsAdmin(false);
       }
     };
     checkUser();
@@ -45,7 +43,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group">
-            <div className="text-2xl font-bold bg-gradient-to-r from-dark to-slate bg-clip-text text-black">
+            <div className="text-2xl font-bold bg-gradient-to-r from-dark to-slate bg-clip-text">
               CINTOS
             </div>
             <div className="text-xs text-slate font-light tracking-wider">
