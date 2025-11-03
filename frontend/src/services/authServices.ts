@@ -22,3 +22,12 @@ export const getCurrentUser = async () => {
 export const logout = async () => {
     return await api.post("/auth/logout");
 }
+
+export const editUser = async (userData: {
+    name?: string;
+    cpfCnpj?: string;
+    email?: string;
+    phone?: string;
+}) => {
+    return await api.put("/auth/me", userData);
+}
