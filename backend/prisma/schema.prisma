@@ -16,6 +16,20 @@ enum UserRole {
   ADMIN
 }
 
+enum Category {
+  BELTS
+  BUCKLE
+  ACCESSORIES
+}
+
+enum TypeBelt {
+  CLASSIC
+  CASUAL
+  EXECUTIVE
+  SPORTY
+  SOCIAL
+}
+
 enum OrderStatus {
   RECEIVED
   PRODUCTION
@@ -55,12 +69,33 @@ model User {
 }
 
 model Product {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
+  id                      String   @id @default(uuid())
+  name                    String
+  description             String?
+  descriptionComplete     String?  @map("description_complete")
+
+  //prices
+  basePrice               Decimal  @map("base_price") @db.Decimal(10, 2)
+  promotionalPrice        Decimal? @map("promotional_price") @db.Decimal(10, 2)
+
+  // categorization
+  category    Category
+  typeBelt    TypeBelt?
+
+  // complex characteristics (JSON)
+  characteristics Json?     //array de caracteristicas, como - largura, material, comprimento, etc
+
+  // Images
   imageUrl    String?  @map("image_url")
-  basePrice   Decimal  @map("base_price") @db.Decimal(10, 2)
+  images      Json?    //array de urls
+
+  // flags and status
+  inPromotion Boolean  @default(false) @map("in_promotion")
+  bestSelling Boolean  @default(false) @map("best_selling")
+  new         Boolean  @default(false)
+  stock       Int      @default(0)
   active      Boolean  @default(true)
+
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

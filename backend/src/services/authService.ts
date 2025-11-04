@@ -89,11 +89,6 @@ export const loginUserService = async(
     }
     const normalizedEmail = emailValidation.normalized
 
-    // Validação de senha
-    if (!password || password.length === 0) {
-        return { status: 400, message: "Senha é obrigatória." }
-    }
-
     // Buscar usuário pelo email normalizado
     const user = await findUserByEmail(normalizedEmail)
     if (!user) {
