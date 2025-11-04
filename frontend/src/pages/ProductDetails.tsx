@@ -1,19 +1,100 @@
 import { useParams, Link } from 'react-router-dom';
-import { useState } from 'react';
-import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
-import { produtosMock, formatarPreco } from '../utils';
+import { useState, useEffect } from 'react';
+import { FaCheckCircle, FaTimesCircle, FaEdit } from 'react-icons/fa';
+import { getProductById, getProducts } from '../services/productServices';
+import { getCurrentUser } from '../services/authServices';
+import { converterProdutoBackendParaFrontend, formatarPreco } from '../utils';
+import type { Produto } from '../types';
+import EditProductModal from '../components/EditProductModal';
+import ProductImages from '../components/ProductImages';
+import ProductCharacteristics from '../components/ProductCharacteristics';
+import RelatedProducts from '../components/RelatedProducts';
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [imagemSelecionada, setImagemSelecionada] = useState(0);
+  const [produto, setProduto] = useState<Produto | null>(null);
+  const [produtosRelacionados, setProdutosRelacionados] = useState<Produto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
-  const produto = produtosMock.find((p) => p.id === id);
+  useEffect(() => {
+    const checkAdmin = async () => {
+      try {
+        const response = await getCurrentUser();
+        if (response.data.status === 200 && response.data.data) {
+          setIsAdmin(response.data.data.role === 'ADMIN');
+        }
+      } catch (error) {
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+  }, []);
 
-  if (!produto) {
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!id) return;
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await getProductById(id);
+
+        if (response.data.status === 200 && response.data.data) {
+          const produtoConvertido = converterProdutoBackendParaFrontend(response.data.data);
+          setProduto(produtoConvertido);
+
+          const categoriaBackend = produtoConvertido.categoria === 'cintos' ? 'BELTS' :
+                                   produtoConvertido.categoria === 'fivelas' ? 'BUCKLE' : 'ACCESSORIES';
+
+          const relacionadosResponse = await getProducts({
+            categoria: categoriaBackend,
+            active: 'true',
+            limit: '5',
+          });
+
+          if (relacionadosResponse.data.status === 200 && relacionadosResponse.data.data?.products) {
+            const relacionados = relacionadosResponse.data.data.products
+              .map((p: any) => converterProdutoBackendParaFrontend(p))
+              .filter((p: Produto) => p.id !== produtoConvertido.id)
+              .slice(0, 4);
+            setProdutosRelacionados(relacionados);
+          }
+        } else {
+          setError('Produto não encontrado');
+        }
+      } catch (err: any) {
+        console.error('Erro ao buscar produto:', err);
+        setError(err.response?.data?.message || 'Erro ao carregar produto');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dark mx-auto mb-4"></div>
+          <p className="text-slate/70 text-lg">Carregando produto...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !produto) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-dark mb-4">Produto não encontrado</h2>
+          <p className="text-slate/70 mb-6">{error || 'O produto que você está procurando não existe.'}</p>
           <Link
             to="/catalogo"
             className="px-6 py-3 bg-dark/10 backdrop-blur-sm border border-dark/20 rounded-xl text-dark font-semibold hover:bg-dark/20 transition-all duration-300"
@@ -25,17 +106,7 @@ const ProductDetails = () => {
     );
   }
 
-  const imagens = produto.imagens || [produto.imagem];
-  const formatLabel = (label: string): string => {
-    return label
-      .split('-')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-
-  const produtosRelacionados = produtosMock
-    .filter((p) => p.id !== produto.id && p.categoria === produto.categoria)
-    .slice(0, 4);
+  const imagens = produto.imagens && produto.imagens.length > 0 ? produto.imagens : [produto.imagem];
 
   return (
     <div className="min-h-screen py-8 lg:py-12">
@@ -53,75 +124,42 @@ const ProductDetails = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
           {/* Images */}
-          <div className="space-y-4">
-            <div className="aspect-square overflow-hidden rounded-2xl bg-gradient-to-br from-blue/20 to-blue/10 border border-blue/40">
-              <img
-                src={imagens[imagemSelecionada]}
-                alt={produto.nome}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  // Se já tentamos o fallback, escondemos a imagem para evitar loop infinito
-                  if (target.src.includes('data:image') || target.dataset.fallback === 'true') {
-                    target.style.display = 'none';
-                    return;
-                  }
-                  // Primeira tentativa de fallback - usar SVG inline como data URL
-                  target.dataset.fallback = 'true';
-                  target.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Crect fill='%23D8E1E8' width='600' height='600'/%3E%3Ctext fill='%235A6A7A' font-family='system-ui,-apple-system' font-size='24' x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle'%3EProduto%3C/text%3E%3C/svg%3E`;
-                }}
-              />
-            </div>
-            {imagens.length > 1 && (
-              <div className="flex gap-4">
-                {imagens.map((img, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setImagemSelecionada(index)}
-                    className={`flex-1 aspect-square overflow-hidden rounded-xl border-2 transition-all ${
-                      imagemSelecionada === index
-                        ? 'border-dark scale-105'
-                        : 'border-blue/40 hover:border-dark/50'
-                    }`}
-                  >
-                    <img
-                      src={img}
-                      alt={`${produto.nome} ${index + 1}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        if (target.dataset.fallback === 'true') {
-                          target.style.display = 'none';
-                          return;
-                        }
-                        target.dataset.fallback = 'true';
-                        target.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='%23D8E1E8' width='200' height='200'/%3E%3Ctext fill='%235A6A7A' font-family='system-ui,-apple-system' font-size='14' x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle'%3EProduto%3C/text%3E%3C/svg%3E`;
-                      }}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <ProductImages
+            imagens={imagens}
+            imagemSelecionada={imagemSelecionada}
+            onSelectImage={setImagemSelecionada}
+            produtoNome={produto.nome}
+          />
 
           {/* Product Info */}
           <div className="space-y-6">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                {produto.emPromocao && (
-                  <span className="px-3 py-1 bg-red-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full">
-                    PROMOÇÃO
-                  </span>
-                )}
-                {produto.maisVendido && (
-                  <span className="px-3 py-1 bg-amber-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full">
-                    MAIS VENDIDO
-                  </span>
-                )}
-                {produto.novo && (
-                  <span className="px-3 py-1 bg-green-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full">
-                    NOVO
-                  </span>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  {produto.emPromocao && (
+                    <span className="px-3 py-1 bg-red-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full">
+                      PROMOÇÃO
+                    </span>
+                  )}
+                  {produto.maisVendido && (
+                    <span className="px-3 py-1 bg-amber-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full">
+                      MAIS VENDIDO
+                    </span>
+                  )}
+                  {produto.novo && (
+                    <span className="px-3 py-1 bg-green-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full">
+                      NOVO
+                    </span>
+                  )}
+                </div>
+                {isAdmin && (
+                  <button
+                    onClick={() => setShowEditModal(true)}
+                    className="p-2 bg-blue/20 hover:bg-blue/30 rounded-lg text-dark transition-colors"
+                    title="Editar produto"
+                  >
+                    <FaEdit />
+                  </button>
                 )}
               </div>
               <h1 className="text-3xl lg:text-4xl font-bold text-dark mb-3">{produto.nome}</h1>
@@ -167,51 +205,7 @@ const ProductDetails = () => {
             )}
 
             {/* Características */}
-            <div className="p-6 bg-white/70 backdrop-blur-md rounded-xl border border-blue/40">
-              <h3 className="text-dark font-semibold text-lg mb-4">Características</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-slate/60 text-sm">Categoria</span>
-                  <p className="text-dark font-medium">{formatLabel(produto.categoria)}</p>
-                </div>
-                {produto.tipoCinto && (
-                  <div>
-                    <span className="text-slate/60 text-sm">Tipo</span>
-                    <p className="text-dark font-medium">{formatLabel(produto.tipoCinto)}</p>
-                  </div>
-                )}
-                <div>
-                  <span className="text-slate/60 text-sm">Material</span>
-                  <p className="text-dark font-medium">{formatLabel(produto.caracteristicas.material)}</p>
-                </div>
-                <div>
-                  <span className="text-slate/60 text-sm">Cor</span>
-                  <p className="text-dark font-medium">{formatLabel(produto.caracteristicas.cor)}</p>
-                </div>
-                <div>
-                  <span className="text-slate/60 text-sm">Acabamento</span>
-                  <p className="text-dark font-medium">{formatLabel(produto.caracteristicas.acabamento)}</p>
-                </div>
-                <div>
-                  <span className="text-slate/60 text-sm">Fivela</span>
-                  <p className="text-dark font-medium">{formatLabel(produto.caracteristicas.fivela.tipo)}</p>
-                </div>
-                <div>
-                  <span className="text-slate/60 text-sm">Largura</span>
-                  <p className="text-dark font-medium">{produto.caracteristicas.largura}</p>
-                </div>
-                <div>
-                  <span className="text-slate/60 text-sm">Comprimento</span>
-                  <p className="text-dark font-medium">{produto.caracteristicas.comprimento}</p>
-                </div>
-                {produto.caracteristicas.garantia && (
-                  <div>
-                    <span className="text-slate/60 text-sm">Garantia</span>
-                    <p className="text-dark font-medium">{produto.caracteristicas.garantia}</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <ProductCharacteristics produto={produto} />
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
@@ -229,45 +223,23 @@ const ProductDetails = () => {
         </div>
 
         {/* Produtos Relacionados */}
-        {produtosRelacionados.length > 0 && (
-          <div className="mt-16">
-            <h2 className="text-3xl font-bold text-dark mb-8">Produtos Relacionados</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {produtosRelacionados.map((p) => (
-                <Link
-                  key={p.id}
-                  to={`/produto/${p.id}`}
-                  className="group bg-white/70 backdrop-blur-md rounded-2xl overflow-hidden border border-blue/40 shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
-                >
-                  <div className="aspect-square overflow-hidden bg-gradient-to-br from-blue/20 to-blue/10">
-                    <img
-                      src={p.imagem}
-                      alt={p.nome}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        if (target.dataset.fallback === 'true') {
-                          target.style.display = 'none';
-                          return;
-                        }
-                        target.dataset.fallback = 'true';
-                        target.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23D8E1E8' width='400' height='400'/%3E%3Ctext fill='%235A6A7A' font-family='system-ui,-apple-system' font-size='18' x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle'%3EProduto%3C/text%3E%3C/svg%3E`;
-                      }}
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-dark font-semibold mb-2 line-clamp-2">{p.nome}</h3>
-                    <p className="text-lg font-bold text-dark">{formatarPreco(p.preco)}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+        <RelatedProducts produtos={produtosRelacionados} />
       </div>
+
+      {/* Modal de Edição */}
+      {produto && (
+        <EditProductModal
+          produto={produto}
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onProductUpdated={(updatedProduto) => {
+            setProduto(updatedProduto);
+            setShowEditModal(false);
+          }}
+        />
+      )}
     </div>
   );
 };
 
 export default ProductDetails;
-
