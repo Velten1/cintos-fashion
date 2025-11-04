@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/authRoutes";
+import productRoutes from "./routes/productRoutes";
 
 dotenv.config()
 
@@ -17,7 +18,11 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
 });
 
+// Rotas de autenticacao
 app.use('/api/auth', authRoutes)
+
+// Rotas de produtos
+app.use('/api/products', productRoutes)
 
 const PORT = process.env.PORT || 3001;
 
