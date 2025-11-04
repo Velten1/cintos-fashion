@@ -712,3 +712,76 @@ export const formatarPreco = (preco: number): string => {
     currency: 'BRL'
   }).format(preco);
 };
+
+// Função para converter produto do backend para o formato do frontend
+export const converterProdutoBackendParaFrontend = (produtoBackend: any): Produto => {
+  // Converter categoria
+  const categoriaMap: Record<string, string> = {
+    'BELTS': 'cintos',
+    'BUCKLE': 'fivelas',
+    'ACCESSORIES': 'acessorios',
+  };
+
+  // Converter tipo de cinto
+  const tipoCintoMap: Record<string, string> = {
+    'CLASSIC': 'classico',
+    'CASUAL': 'casual',
+    'EXECUTIVE': 'executivo',
+    'SPORTY': 'esportivo',
+    'SOCIAL': 'social',
+  };
+
+  // Determinar preço e preço original
+  const preco = produtoBackend.promotionalPrice || produtoBackend.basePrice;
+  const precoOriginal = produtoBackend.promotionalPrice ? produtoBackend.basePrice : undefined;
+
+  // Converter características
+  const caracteristicas = produtoBackend.characteristics ? {
+    largura: produtoBackend.characteristics.largura || '',
+    comprimento: produtoBackend.characteristics.comprimento || '',
+    material: produtoBackend.characteristics.material || 'couro-genuino',
+    acabamento: produtoBackend.characteristics.acabamento || 'fosco',
+    fivela: produtoBackend.characteristics.fivela ? {
+      tipo: produtoBackend.characteristics.fivela.tipo || 'prateada',
+      formato: produtoBackend.characteristics.fivela.formato || '',
+      dimensoes: produtoBackend.characteristics.fivela.dimensoes || '',
+    } : {
+      tipo: 'prateada' as any,
+      formato: '',
+      dimensoes: '',
+    },
+    cor: produtoBackend.characteristics.cor || 'preto',
+    resistenteAgua: produtoBackend.characteristics.resistenteAgua || false,
+    forro: produtoBackend.characteristics.forro,
+    garantia: produtoBackend.characteristics.garantia,
+  } : {
+    largura: '',
+    comprimento: '',
+    material: 'couro-genuino' as any,
+    acabamento: 'fosco' as any,
+    fivela: {
+      tipo: 'prateada' as any,
+      formato: '',
+      dimensoes: '',
+    },
+    cor: 'preto' as any,
+  };
+
+  return {
+    id: produtoBackend.id,
+    nome: produtoBackend.name,
+    descricao: produtoBackend.description || '',
+    descricaoCompleta: produtoBackend.descriptionComplete,
+    preco: preco,
+    precoOriginal: precoOriginal,
+    categoria: (categoriaMap[produtoBackend.category] || 'cintos') as any,
+    tipoCinto: produtoBackend.typeBelt ? (tipoCintoMap[produtoBackend.typeBelt] || produtoBackend.typeBelt.toLowerCase()) as any : undefined,
+    caracteristicas: caracteristicas as any,
+    imagem: produtoBackend.imageUrl || produtoBackend.images?.[0] || '',
+    imagens: produtoBackend.images || [],
+    emPromocao: produtoBackend.inPromotion || false,
+    maisVendido: produtoBackend.bestSelling || false,
+    novo: produtoBackend.new || false,
+    estoque: produtoBackend.stock || 0,
+  };
+};

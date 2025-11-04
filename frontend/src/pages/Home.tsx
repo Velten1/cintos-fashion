@@ -1,12 +1,60 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaStar, FaBullseye, FaTruck } from 'react-icons/fa';
 import ProductGrid from '../components/ProductGrid';
-import { produtosMock } from '../utils';
+import { getProducts } from '../services/productServices';
+import { converterProdutoBackendParaFrontend } from '../utils';
+import type { Produto } from '../types';
 
 const Home = () => {
-  const produtosDestaque = produtosMock
-    .filter((p) => p.maisVendido || p.emPromocao || p.novo)
-    .slice(0, 8);
+  const [produtosDestaque, setProdutosDestaque] = useState<Produto[]>([]);
+  const [totalProdutos, setTotalProdutos] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        // Buscar produtos em destaque (mais vendidos, promoção ou novos)
+        const response = await getProducts({
+          active: 'true',
+          limit: '20', // Buscar mais para ter opções de destaque
+        });
+
+        if (response.data.status === 200 && response.data.data?.products) {
+          const produtosConvertidos = response.data.data.products.map((produto: any) =>
+            converterProdutoBackendParaFrontend(produto)
+          );
+
+          // Filtrar produtos em destaque e limitar a 8
+          const destaque = produtosConvertidos
+            .filter((p: Produto) => p.maisVendido || p.emPromocao || p.novo)
+            .slice(0, 8);
+
+          setProdutosDestaque(destaque);
+          
+          // Usar o total da paginação se disponível
+          if (response.data.data.pagination?.total) {
+            setTotalProdutos(response.data.data.pagination.total);
+          } else {
+            // Se não houver paginação, buscar total separadamente
+            const totalResponse = await getProducts({
+              active: 'true',
+            });
+            if (totalResponse.data.status === 200 && totalResponse.data.data?.pagination?.total) {
+              setTotalProdutos(totalResponse.data.data.pagination.total);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao buscar produtos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const categorias = [
     {
@@ -92,7 +140,9 @@ const Home = () => {
                   <FaBullseye />
                 </div>
                 <h3 className="text-white font-semibold text-sm mb-1 drop-shadow-md">Variedade Completa</h3>
-                <p className="text-white/90 text-xs drop-shadow-sm">Mais de {produtosMock.length} produtos disponíveis</p>
+                <p className="text-white/90 text-xs drop-shadow-sm">
+                  {totalProdutos > 0 ? `${totalProdutos} produtos disponíveis` : 'Produtos disponíveis'}
+                </p>
               </div>
               <div className="bg-white/10 backdrop-blur-md border border-white/30 rounded-xl p-4 shadow-xl">
                 <div className="text-3xl mb-2 text-white flex justify-center drop-shadow-md">
@@ -177,7 +227,28 @@ const Home = () => {
               Ver Todos
             </Link>
           </div>
-          <ProductGrid produtos={produtosDestaque} />
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="inline-block p-6 bg-white/60 backdrop-blur-md rounded-2xl border border-blue/40">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dark mx-auto mb-4"></div>
+                <p className="text-slate/60 text-lg font-medium">Carregando produtos...</p>
+              </div>
+            </div>
+          ) : produtosDestaque.length > 0 ? (
+            <ProductGrid produtos={produtosDestaque} />
+          ) : (
+            <div className="text-center py-20">
+              <div className="inline-block p-6 bg-white/60 backdrop-blur-md rounded-2xl border border-blue/40">
+                <p className="text-slate/60 text-lg font-medium">Nenhum produto em destaque no momento</p>
+                <Link
+                  to="/catalogo"
+                  className="inline-block mt-4 px-6 py-3 bg-dark/10 backdrop-blur-sm border border-dark/20 rounded-xl text-dark font-semibold hover:bg-dark/20 transition-all duration-300"
+                >
+                  Ver Catálogo Completo
+                </Link>
+              </div>
+            </div>
+          )}
           <div className="text-center mt-8 md:hidden">
             <Link
               to="/catalogo"
