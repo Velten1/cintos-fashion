@@ -71,6 +71,10 @@ const MinhaConta = () => {
       navigate('/perfil');
       return;
     }
+    if (id === 'endereco') {
+      navigate('/minha-conta/enderecos');
+      return;
+    }
     // Outras seções mostram mensagem de desenvolvimento
     setSelectedSection(id);
   };

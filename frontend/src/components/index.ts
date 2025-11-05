@@ -14,3 +14,7 @@ export { default as ProductFormBasic } from './ProductFormBasic';
 export { default as ProductFormCharacteristics } from './ProductFormCharacteristics';
 export { default as ProductFormImages } from './ProductFormImages';
 export { default as ProductFormFlags } from './ProductFormFlags';
+export { default as AddressForm } from './AddressForm';
+export { default as AddressCard } from './AddressCard';
+export { default as AddressList } from './AddressList';
+export { default as EmptyAddresses } from './EmptyAddresses';
