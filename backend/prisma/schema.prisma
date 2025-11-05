@@ -64,6 +64,7 @@ model User {
   // Relations
   orders        Order[]
   notifications Notification[]
+  addresses     Address[]
 
   @@map("users")
 }
@@ -212,4 +213,25 @@ model Notification {
   order Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
+}
+
+model Address {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  name         String   // Nome do endereço (ex: "Casa", "Trabalho")
+  street       String   // Rua
+  number       String   // Número
+  complement   String?  // Complemento
+  neighborhood String   @map("neighborhood") // Bairro
+  city         String   // Cidade
+  state        String   // Estado (UF)
+  zipCode      String   @map("zip_code") // CEP
+  isDefault    Boolean  @default(false) @map("is_default") // Endereço padrão
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("addresses")
 }

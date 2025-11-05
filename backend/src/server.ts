@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/authRoutes";
 import productRoutes from "./routes/productRoutes";
+import addressRoutes from "./routes/addressRoutes";
 
 dotenv.config()
 
@@ -23,6 +24,9 @@ app.use('/api/auth', authRoutes)
 
 // Rotas de produtos
 app.use('/api/products', productRoutes)
+
+// Rotas de endereços
+app.use('/api/addresses', addressRoutes)
 
 const PORT = process.env.PORT || 3001;
 
