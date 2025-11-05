@@ -55,7 +55,7 @@ model User {
   email     String   @unique
   password  String
   phone     String?
-  cpfCnpj   String?  @unique     @map("cpf_cnpj")
+  cpfCnpj   String?  @unique @map("cpf_cnpj")
   address   Json?
   role      UserRole @default(CLIENT)
   createdAt DateTime @default(now()) @map("created_at")
@@ -65,44 +65,46 @@ model User {
   orders        Order[]
   notifications Notification[]
   addresses     Address[]
+  cart          Cart?
 
   @@map("users")
 }
 
 model Product {
-  id                      String   @id @default(uuid())
-  name                    String
-  description             String?
-  descriptionComplete     String?  @map("description_complete")
+  id                  String  @id @default(uuid())
+  name                String
+  description         String?
+  descriptionComplete String? @map("description_complete")
 
   //prices
-  basePrice               Decimal  @map("base_price") @db.Decimal(10, 2)
-  promotionalPrice        Decimal? @map("promotional_price") @db.Decimal(10, 2)
+  basePrice        Decimal  @map("base_price") @db.Decimal(10, 2)
+  promotionalPrice Decimal? @map("promotional_price") @db.Decimal(10, 2)
 
   // categorization
-  category    Category
-  typeBelt    TypeBelt?
+  category Category
+  typeBelt TypeBelt?
 
   // complex characteristics (JSON)
-  characteristics Json?     //array de caracteristicas, como - largura, material, comprimento, etc
+  characteristics Json? //array de caracteristicas, como - largura, material, comprimento, etc
 
   // Images
-  imageUrl    String?  @map("image_url")
-  images      Json?    //array de urls
+  imageUrl String? @map("image_url")
+  images   Json? //array de urls
 
   // flags and status
-  inPromotion Boolean  @default(false) @map("in_promotion")
-  bestSelling Boolean  @default(false) @map("best_selling")
-  new         Boolean  @default(false)
-  stock       Int      @default(0)
-  active      Boolean  @default(true)
+  inPromotion Boolean @default(false) @map("in_promotion")
+  bestSelling Boolean @default(false) @map("best_selling")
+  new         Boolean @default(false)
+  stock       Int     @default(0)
+  active      Boolean @default(true)
 
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  orderItems  OrderItem[]
-  priceRules  PriceRule[]
+  orderItems OrderItem[]
+  priceRules PriceRule[]
+  cartItems  CartItem[]
 
   @@map("products")
 }
@@ -110,7 +112,7 @@ model Product {
 model Order {
   id            String        @id @default(uuid())
   userId        String        @map("user_id")
-  totalAmount    Decimal       @map("total_amount") @db.Decimal(10, 2)
+  totalAmount   Decimal       @map("total_amount") @db.Decimal(10, 2)
   status        OrderStatus   @default(RECEIVED)
   paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
   paymentMethod String?       @map("payment_method")
@@ -121,7 +123,7 @@ model Order {
   updatedAt     DateTime      @updatedAt @map("updated_at")
 
   // Relations
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   items         OrderItem[]
   fabrics       Fabric[]
   statusHistory StatusHistory[]
@@ -149,14 +151,14 @@ model OrderItem {
 }
 
 model Fabric {
-  id            String      @id @default(uuid())
-  orderId       String      @map("order_id")
-  qrCode        String      @unique @map("qr_code")
-  qrCodeImageUrl String?    @map("qr_code_image_url")
-  status        OrderStatus @default(RECEIVED)
-  notes         String?
-  createdAt     DateTime    @default(now()) @map("created_at")
-  updatedAt     DateTime    @updatedAt @map("updated_at")
+  id             String      @id @default(uuid())
+  orderId        String      @map("order_id")
+  qrCode         String      @unique @map("qr_code")
+  qrCodeImageUrl String?     @map("qr_code_image_url")
+  status         OrderStatus @default(RECEIVED)
+  notes          String?
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
 
   // Relations
   order         Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -182,15 +184,15 @@ model StatusHistory {
 }
 
 model PriceRule {
-  id         String   @id @default(uuid())
-  productId  String   @map("product_id")
-  fabricType String?
-  minQuantity Int     @map("min_quantity")
-  maxQuantity Int?    @map("max_quantity")
-  price      Decimal  @db.Decimal(10, 2)
-  active     Boolean  @default(true)
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(uuid())
+  productId   String   @map("product_id")
+  fabricType  String?
+  minQuantity Int      @map("min_quantity")
+  maxQuantity Int?     @map("max_quantity")
+  price       Decimal  @db.Decimal(10, 2)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
   product Product @relation(fields: [productId], references: [id])
@@ -218,13 +220,13 @@ model Notification {
 model Address {
   id           String   @id @default(uuid())
   userId       String   @map("user_id")
-  name         String   // Nome do endereço (ex: "Casa", "Trabalho")
-  street       String   // Rua
-  number       String   // Número
-  complement   String?  // Complemento
+  name         String // Nome do endereço (ex: "Casa", "Trabalho")
+  street       String // Rua
+  number       String // Número
+  complement   String? // Complemento
   neighborhood String   @map("neighborhood") // Bairro
-  city         String   // Cidade
-  state        String   // Estado (UF)
+  city         String // Cidade
+  state        String // Estado (UF)
   zipCode      String   @map("zip_code") // CEP
   isDefault    Boolean  @default(false) @map("is_default") // Endereço padrão
   createdAt    DateTime @default(now()) @map("created_at")
@@ -234,4 +236,34 @@ model Address {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("addresses")
+}
+
+model Cart {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String   @map("cart_id")
+  productId String   @map("product_id")
+  quantity  Int
+  unitPrice Decimal  @map("unit_price") @db.Decimal(10, 2) // Preço calculado na hora
+  subtotal  Decimal  @db.Decimal(10, 2) // quantity * unitPrice
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([cartId, productId]) // Um produto só pode aparecer uma vez no carrinho
+  @@map("cart_items")
 }
