@@ -5,6 +5,10 @@ import ProductGrid from '../components/ProductGrid';
 import { getProducts } from '../services/productServices';
 import { converterProdutoBackendParaFrontend } from '../utils';
 import type { Produto } from '../types';
+import cintosExecutivoImg from '../assets/cintosExecutivo.png';
+import cintoVermelhoImg from '../assets/cintoVermelho.png';
+import cintoFivelaRedondaImg from '../assets/cintoFivelaRedonda.png';
+
 
 const Home = () => {
   const [produtosDestaque, setProdutosDestaque] = useState<Produto[]>([]);
@@ -60,19 +64,19 @@ const Home = () => {
     {
       nome: 'Cintos Executivos',
       descricao: 'Elegância para o ambiente corporativo',
-      imagem: 'https://images.unsplash.com/photo-1611647549091-40fe787b59e8?w=600',
+      imagem: cintosExecutivoImg,
       link: '/catalogo?categoria=cintos&tipoCinto=executivo',
     },
     {
       nome: 'Cintos Casuais',
       descricao: 'Estilo descontraído e moderno',
-      imagem: 'https://images.unsplash.com/photo-1627123424574-724758594e93?w=600',
+      imagem: cintoVermelhoImg,
       link: '/catalogo?categoria=cintos&tipoCinto=casual',
     },
     {
       nome: 'Fivelas',
       descricao: 'Personalize seus acessórios',
-      imagem: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=600',
+      imagem: cintoFivelaRedondaImg,
       link: '/catalogo?categoria=fivelas',
     },
     {
@@ -202,9 +206,9 @@ const Home = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-dark/80 via-dark/20 to-transparent" />
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-light">
-                  <h3 className="text-xl font-bold mb-1">{categoria.nome}</h3>
-                  <p className="text-silver/90 text-sm">{categoria.descricao}</p>
+                <div className="absolute bottom-0 left-0 right-0 p-6 z-10">
+                  <h3 className="text-xl font-bold mb-1 text-black">{categoria.nome}</h3>
+                  <p className="text-black text-sm">{categoria.descricao}</p>
                 </div>
               </Link>
             ))}
