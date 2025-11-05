@@ -86,10 +86,10 @@ const Navbar = () => {
                   </Link>
                 )}
                 <Link
-                  to="/perfil"
+                  to="/minha-conta"
                   className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors"
                 >
-                  Perfil
+                  Minha Conta
                 </Link>
               </>
             )}
@@ -174,11 +174,11 @@ const Navbar = () => {
                     </Link>
                   )}
                   <Link
-                    to="/perfil"
+                    to="/minha-conta"
                     onClick={() => setIsMenuOpen(false)}
                     className="block px-4 py-2 rounded-lg text-sm font-medium text-slate hover:bg-blue/30 hover:text-dark transition-all duration-200"
                   >
-                    Perfil
+                    Minha Conta
                   </Link>
                 </>
               )}
