@@ -56,3 +56,34 @@ export interface Filtros {
   maisVendido?: boolean;
   novo?: boolean;
 }
+
+export interface CartItem {
+  id: string;
+  cartId: string;
+  productId: string;
+  quantity: number;
+  unitPrice: string;
+  subtotal: string;
+  createdAt: string;
+  updatedAt: string;
+  product: {
+    id: string;
+    name: string;
+    description: string;
+    basePrice: string;
+    promotionalPrice: string | null;
+    category: string;
+    imageUrl: string | null;
+    images: string[] | null;
+    stock: number;
+    active: boolean;
+  };
+}
+
+export interface Cart {
+  id: string;
+  userId: string;
+  items: CartItem[];
+  createdAt: string;
+  updatedAt: string;
+}

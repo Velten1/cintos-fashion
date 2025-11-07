@@ -1,8 +1,9 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { FaCheckCircle, FaTimesCircle, FaEdit } from 'react-icons/fa';
 import { getProductById, getProducts } from '../services/productServices';
 import { getCurrentUser } from '../services/authServices';
+import { addItemToCart } from '../services/cartServices';
 import { converterProdutoBackendParaFrontend, formatarPreco } from '../utils';
 import type { Produto } from '../types';
 import EditProductModal from '../components/EditProductModal';
@@ -12,6 +13,7 @@ import RelatedProducts from '../components/RelatedProducts';
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [imagemSelecionada, setImagemSelecionada] = useState(0);
   const [produto, setProduto] = useState<Produto | null>(null);
   const [produtosRelacionados, setProdutosRelacionados] = useState<Produto[]>([]);
@@ -19,6 +21,9 @@ const ProductDetails = () => {
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -26,13 +31,52 @@ const ProductDetails = () => {
         const response = await getCurrentUser();
         if (response.data.status === 200 && response.data.data) {
           setIsAdmin(response.data.data.role === 'ADMIN');
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
         }
       } catch (error) {
         setIsAdmin(false);
+        setIsAuthenticated(false);
       }
     };
     checkAdmin();
   }, []);
+
+  const handleAddToCart = async () => {
+    if (!produto || !isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      setAddingToCart(true);
+      setError(null);
+
+      const response = await addItemToCart({
+        productId: produto.id,
+        quantity: quantity,
+      });
+
+      if (response.data.status === 201 || response.data.status === 200) {
+        const shouldGoToCart = window.confirm('Item adicionado ao carrinho! Deseja ir para o carrinho?');
+        if (shouldGoToCart) {
+          navigate('/carrinho');
+        }
+      } else {
+        setError(response.data.message || 'Erro ao adicionar item ao carrinho');
+      }
+    } catch (err: any) {
+      console.error('Erro ao adicionar ao carrinho:', err);
+      if (err.response?.status === 401) {
+        navigate('/login');
+      } else {
+        setError(err.response?.data?.message || 'Erro ao adicionar item ao carrinho');
+      }
+    } finally {
+      setAddingToCart(false);
+    }
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -209,16 +253,59 @@ const ProductDetails = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <button
-                disabled={produto.estoque === 0}
-                className="flex-1 px-6 py-4 bg-dark text-light rounded-xl font-semibold hover:bg-slate transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {produto.estoque > 0 ? 'Adicionar ao Carrinho' : 'Fora de Estoque'}
-              </button>
-              <button className="px-6 py-4 bg-white/70 backdrop-blur-md border border-blue/40 text-dark rounded-xl font-semibold hover:bg-blue/30 transition-all duration-300">
-                Favoritar
-              </button>
+              {isAuthenticated ? (
+                <>
+                  <div className="flex-1 flex items-center gap-2">
+                    <div className="flex items-center border border-blue/30 rounded-lg">
+                      <button
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        disabled={quantity <= 1 || addingToCart}
+                        className="px-3 py-2 text-dark hover:bg-blue/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min="1"
+                        max={produto.estoque}
+                        value={quantity}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 1;
+                          setQuantity(Math.max(1, Math.min(val, produto.estoque)));
+                        }}
+                        className="w-16 px-2 py-2 text-center border-x border-blue/30 focus:outline-none focus:ring-2 focus:ring-dark"
+                      />
+                      <button
+                        onClick={() => setQuantity(Math.min(produto.estoque, quantity + 1))}
+                        disabled={quantity >= produto.estoque || addingToCart}
+                        className="px-3 py-2 text-dark hover:bg-blue/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <button
+                      onClick={handleAddToCart}
+                      disabled={produto.estoque === 0 || addingToCart}
+                      className="flex-1 px-6 py-4 bg-dark text-light rounded-xl font-semibold hover:bg-slate transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {addingToCart ? 'Adicionando...' : produto.estoque > 0 ? 'Adicionar ao Carrinho' : 'Fora de Estoque'}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="flex-1 px-6 py-4 bg-dark text-light rounded-xl font-semibold hover:bg-slate transition-all duration-300"
+                >
+                  Faça login para comprar
+                </button>
+              )}
             </div>
+            {error && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                {error}
+              </div>
+            )}
           </div>
         </div>
 

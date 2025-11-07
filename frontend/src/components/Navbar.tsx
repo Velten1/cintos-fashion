@@ -1,13 +1,16 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { FaShoppingCart } from 'react-icons/fa';
 import SearchBar from './SearchBar.tsx';
 import { getCurrentUser } from '../services/authServices';
+import { getCart } from '../services/cartServices';
 
 const Navbar = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [cartItemsCount, setCartItemsCount] = useState(0);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -16,6 +19,8 @@ const Navbar = () => {
         if (response.data.status === 200 && response.data.data) {
           setIsAuthenticated(true);
           setIsAdmin(response.data.data.role === 'ADMIN');
+          // Carregar quantidade de items no carrinho
+          loadCartCount();
         } else {
           setIsAuthenticated(false);
           setIsAdmin(false);
@@ -28,6 +33,18 @@ const Navbar = () => {
     };
     checkUser();
   }, []);
+
+  const loadCartCount = async () => {
+    try {
+      const response = await getCart();
+      if (response.data.status === 200 && response.data.data) {
+        const cart = response.data.data as { items?: unknown[] };
+        setCartItemsCount(cart.items?.length || 0);
+      }
+    } catch (error) {
+      // Ignorar erros ao carregar carrinho
+    }
+  };
 
   const navLinks = [
     { path: '/', label: 'Início' },
@@ -77,6 +94,17 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-3 ml-4">
             {isAuthenticated && (
               <>
+                <Link
+                  to="/carrinho"
+                  className="relative px-4 py-2 text-slate hover:text-dark transition-colors"
+                >
+                  <FaShoppingCart className="text-xl" />
+                  {cartItemsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {cartItemsCount > 9 ? '9+' : cartItemsCount}
+                    </span>
+                  )}
+                </Link>
                 {isAdmin && (
                   <>
                     <Link
@@ -172,6 +200,19 @@ const Navbar = () => {
             <div className="pt-4 border-t border-blue/30 space-y-2">
               {isAuthenticated && (
                 <>
+                  <Link
+                    to="/carrinho"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-slate hover:bg-blue/30 hover:text-dark transition-all duration-200"
+                  >
+                    <FaShoppingCart />
+                    <span>Carrinho</span>
+                    {cartItemsCount > 0 && (
+                      <span className="ml-auto bg-red-600 text-white text-xs font-bold rounded-full px-2 py-0.5">
+                        {cartItemsCount}
+                      </span>
+                    )}
+                  </Link>
                   {isAdmin && (
                     <>
                       <Link
