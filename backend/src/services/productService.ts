@@ -232,11 +232,9 @@ export const updateProductService = async (id: string, productData: any) => {
       }
     }
 
-    if (productData.promotionalPrice === null || productData.promotionalPrice === undefined) {
-      if ('promotionalPrice' in productData) {
-        normalizedData.promotionalPrice = null;
-        normalizedData.inPromotion = false;
-      }
+    // Garantir consistência: se inPromotion é false, promotionalPrice DEVE ser null
+    if (normalizedData.inPromotion === false) {
+      normalizedData.promotionalPrice = null;
     }
 
     const updatedProduct = await editProduct(id, normalizedData);

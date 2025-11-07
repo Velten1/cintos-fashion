@@ -28,7 +28,62 @@ export const createProduct = async (productData: any) => {
 };
 
 export const editProduct = async (id: string, productData: any) => {
-  return await prisma.product.update({ where: { id }, data: productData });
+  // IMPORTANTE: Garantir que campos null sejam explicitamente setados
+  // O Prisma não atualiza campos que são undefined, precisa ser null explícito
+  const updateData: any = {};
+  
+  // Copiar todos os campos do productData
+  for (const key in productData) {
+    if (productData.hasOwnProperty(key)) {
+      const value = productData[key];
+      // Converter undefined para null em campos nullable
+      if (value === undefined) {
+        // Para campos nullable, converter undefined para null
+        if (key === 'promotionalPrice' || 
+            key === 'description' || 
+            key === 'descriptionComplete' ||
+            key === 'imageUrl' ||
+            key === 'images' ||
+            key === 'characteristics' ||
+            key === 'typeBelt') {
+          updateData[key] = null;
+        }
+        // Para outros campos, não incluir (Prisma ignora undefined)
+      } else {
+        updateData[key] = value;
+      }
+    }
+  }
+  
+  // REGRA CRÍTICA: Se inPromotion é false, promotionalPrice DEVE ser null
+  // E o campo DEVE estar presente no objeto para o Prisma atualizar
+  if ('inPromotion' in updateData) {
+    if (updateData.inPromotion === false) {
+      // Se inPromotion é false, promotionalPrice DEVE ser null e estar presente
+      updateData.promotionalPrice = null;
+    }
+  }
+  
+  // Se promotionalPrice estiver presente no productData original e for um valor "vazio", setar como null
+  if ('promotionalPrice' in productData) {
+    const promoPrice = productData.promotionalPrice;
+    if (promoPrice === null || 
+        promoPrice === undefined || 
+        promoPrice === '' || 
+        promoPrice === 0) {
+      updateData.promotionalPrice = null;
+      updateData.inPromotion = false;
+    }
+  }
+  
+  // Garantir que se inPromotion está presente mas promotionalPrice não, incluir promotionalPrice como null
+  if ('inPromotion' in updateData && !('promotionalPrice' in updateData)) {
+    if (updateData.inPromotion === false) {
+      updateData.promotionalPrice = null;
+    }
+  }
+  
+  return await prisma.product.update({ where: { id }, data: updateData });
 };
 
 export const deleteProduct = async (id: string) => {

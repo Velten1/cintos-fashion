@@ -61,17 +61,30 @@ const findApplicablePriceRule = async (
   quantity: number,
   fabricType?: string
 ): Promise<{ price: number; rule: Prisma.PriceRuleGetPayload<{}> } | null> => {
+  // Construir condição para fabricType
+  // Se fabricType não for fornecido, busca regras com fabricType null
+  // Se fabricType for fornecido, busca regras com esse fabricType específico
+  
+  // Buscar todas as regras que podem se aplicar
+  // Uma regra se aplica se:
+  // - minQuantity <= quantity (a quantidade está dentro ou acima do mínimo)
+  // - E (maxQuantity é null OU maxQuantity >= quantity) (a quantidade está dentro ou abaixo do máximo)
+  
+  // Construir condição de fabricType
+  // Se fabricType não for fornecido, busca regras com fabricType null
+  const whereClause: Prisma.PriceRuleWhereInput = {
+    productId,
+    active: true,
+    fabricType: fabricType || null,
+    minQuantity: { lte: quantity },
+    OR: [
+      { maxQuantity: null },
+      { maxQuantity: { gte: quantity } },
+    ],
+  };
+
   const priceRules = await prisma.priceRule.findMany({
-    where: {
-      productId,
-      active: true,
-      fabricType: fabricType || null,
-      minQuantity: { lte: quantity },
-      OR: [
-        { maxQuantity: null },
-        { maxQuantity: { gte: quantity } },
-      ],
-    },
+    where: whereClause,
     orderBy: {
       minQuantity: 'desc', // Pega a regra com maior minQuantity que se aplica
     },
@@ -162,7 +175,7 @@ export const calculateProductPrice = async (
       : 'sem limite';
     appliedRule = `Regra de quantidade: ${quantity} unidades (faixa: ${priceRule.rule?.minQuantity}-${maxQty})`;
   }
-  // 2. Preço promocional (se ativo)
+  // 2. Preço promocional (se ativo) - SÓ se não houver regra de preço
   else if (product.inPromotion && product.promotionalPrice) {
     unitPrice = Number(product.promotionalPrice);
     appliedRule = 'Preço promocional';

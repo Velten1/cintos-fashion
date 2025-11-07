@@ -100,8 +100,9 @@ export const validatePromotionalPrice = (
   promotionalPrice: number | string | null | undefined,
   basePrice: number
 ): { isValid: boolean; normalized: number | null; message?: string } => {
-  if (!promotionalPrice) {
-    return { isValid: true, normalized: null }; // Opcional
+  // Se for null, undefined, string vazia ou 0, retorna null (remove promoção)
+  if (promotionalPrice === null || promotionalPrice === undefined || promotionalPrice === '' || promotionalPrice === 0) {
+    return { isValid: true, normalized: null };
   }
 
   const numPrice = typeof promotionalPrice === 'string' ? parseFloat(promotionalPrice) : Number(promotionalPrice);
@@ -423,19 +424,30 @@ export const normalizeProductData = (productData: any): {
   }
 
   // Preço promocional (opcional, mas depende do preço base)
-  if (productData.promotionalPrice !== undefined && productData.promotionalPrice !== null) {
+  // Permite remover preço promocional enviando null, undefined, string vazia ou 0
+  if ('promotionalPrice' in productData) {
+    const promoPriceValue = productData.promotionalPrice;
+    
+    // Valida e normaliza o preço promocional (a função já trata null/undefined/""/0)
     const promoPriceValidation = validatePromotionalPrice(
-      productData.promotionalPrice,
+      promoPriceValue,
       normalized.basePrice || productData.basePrice
     );
+    
     if (!promoPriceValidation.isValid) {
       errors.push(promoPriceValidation.message || 'Preço promocional inválido');
-    } else if (promoPriceValidation.normalized !== null) {
-      normalized.promotionalPrice = promoPriceValidation.normalized;
-      normalized.inPromotion = true;
+    } else {
+      // IMPORTANTE: Sempre incluir o campo, mesmo que seja null
+      // O Prisma precisa de null explícito para atualizar o campo no banco
+      // Se normalized for null, significa que queremos remover o preço promocional
+      if (promoPriceValidation.normalized === null) {
+        normalized.promotionalPrice = null; // Explicitamente null
+        normalized.inPromotion = false;
+      } else {
+        normalized.promotionalPrice = promoPriceValidation.normalized;
+        normalized.inPromotion = true;
+      }
     }
-  } else if (productData.inPromotion === false) {
-    normalized.inPromotion = false;
   }
 
   // Categoria (obrigatória)
@@ -487,11 +499,23 @@ export const normalizeProductData = (productData: any): {
   }
 
   // Flags (opcionais, default false)
-  const inPromotionValidation = validateBooleanFlag(productData.inPromotion, 'inPromotion');
-  if (!inPromotionValidation.isValid) {
-    errors.push(inPromotionValidation.message || 'Flag inPromotion inválida');
-  } else {
-    normalized.inPromotion = inPromotionValidation.normalized;
+  // inPromotion só é atualizado se não foi definido pelo preço promocional
+  if (!('promotionalPrice' in productData)) {
+    const inPromotionValidation = validateBooleanFlag(productData.inPromotion, 'inPromotion');
+    if (!inPromotionValidation.isValid) {
+      errors.push(inPromotionValidation.message || 'Flag inPromotion inválida');
+    } else {
+      normalized.inPromotion = inPromotionValidation.normalized;
+      // IMPORTANTE: Se inPromotion for false, promotionalPrice DEVE ser null
+      if (normalized.inPromotion === false) {
+        normalized.promotionalPrice = null;
+      }
+    }
+  }
+  // Se promotionalPrice foi fornecido, inPromotion já foi definido acima
+  // Garantir consistência: se inPromotion é false, promotionalPrice deve ser null
+  if (normalized.inPromotion === false && normalized.promotionalPrice !== null) {
+    normalized.promotionalPrice = null;
   }
 
   const bestSellingValidation = validateBooleanFlag(productData.bestSelling, 'bestSelling');
