@@ -6,7 +6,7 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
     const token = (req as any).cookies?.token || req.headers.authorization?.split(' ')[1];
 
     if (!token) {
-      return res.status(401).json({ message: 'Token não fornecido' });
+      return res.status(401).json({ message: 'É necessário fazer login' });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
