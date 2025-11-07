@@ -195,7 +195,25 @@ const AdminCreateProduct = () => {
     try {
       const response = await createProduct(productData);
       if (response.data.status === 201) {
-        navigate('/catalogo');
+        const product = response.data.data;
+        const productId = product?.id;
+        if (productId) {
+          // Perguntar se quer criar regras de preço agora
+          const criarRegras = window.confirm(
+            'Produto criado com sucesso!\n\nDeseja configurar regras de preço agora?\n\n' +
+            'Clique em "OK" para ir direto para a página de regras de preço.\n' +
+            'Clique em "Cancelar" para ir ao catálogo (você pode criar regras depois pelo menu "Regras de Preço").'
+          );
+          
+          if (criarRegras) {
+            navigate(`/admin/produtos/${productId}/price-rules`);
+          } else {
+            navigate('/catalogo');
+          }
+        } else {
+          setError('Produto criado, mas não foi possível obter o ID. Navegando para o catálogo...');
+          setTimeout(() => navigate('/catalogo'), 2000);
+        }
       } else {
         setError(response.data.message || 'Erro ao criar produto');
       }

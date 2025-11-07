@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import DefaultLayout from './components/DefaultLayout';
-import { Home, Catalog, ProductDetails, Login, Register, Profile, MinhaConta, Addresses, AdminCreateProduct } from './pages';
+import { Home, Catalog, ProductDetails, Login, Register, Profile, MinhaConta, Addresses, AdminCreateProduct, AdminPriceRules, AdminPriceRulesList } from './pages';
 import './App.css';
 
 function App() {
@@ -17,6 +17,8 @@ function App() {
         
         {/* Rotas Admin */}
         <Route path="/admin/produtos/cadastrar" element={<DefaultLayout><AdminCreateProduct /></DefaultLayout>} />
+        <Route path="/admin/regras-preco" element={<DefaultLayout><AdminPriceRulesList /></DefaultLayout>} />
+        <Route path="/admin/produtos/:productId/price-rules" element={<DefaultLayout><AdminPriceRules /></DefaultLayout>} />
         
         {/* Rotas sem layout padrão (tela cheia) */}
         <Route path="/login" element={<Login />} />

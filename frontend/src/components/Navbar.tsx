@@ -78,12 +78,20 @@ const Navbar = () => {
             {isAuthenticated && (
               <>
                 {isAdmin && (
-                  <Link
-                    to="/admin/produtos/cadastrar"
-                    className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors"
-                  >
-                    Cadastrar Produtos
-                  </Link>
+                  <>
+                    <Link
+                      to="/admin/produtos/cadastrar"
+                      className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors"
+                    >
+                      Cadastrar Produtos
+                    </Link>
+                    <Link
+                      to="/admin/regras-preco"
+                      className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors"
+                    >
+                      Regras de Preço
+                    </Link>
+                  </>
                 )}
                 <Link
                   to="/minha-conta"
@@ -165,13 +173,22 @@ const Navbar = () => {
               {isAuthenticated && (
                 <>
                   {isAdmin && (
-                    <Link
-                      to="/admin/produtos/cadastrar"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="block px-4 py-2 rounded-lg text-sm font-medium text-slate hover:bg-blue/30 hover:text-dark transition-all duration-200"
-                    >
-                      Cadastrar Produtos
-                    </Link>
+                    <>
+                      <Link
+                        to="/admin/produtos/cadastrar"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="block px-4 py-2 rounded-lg text-sm font-medium text-slate hover:bg-blue/30 hover:text-dark transition-all duration-200"
+                      >
+                        Cadastrar Produtos
+                      </Link>
+                      <Link
+                        to="/admin/regras-preco"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="block px-4 py-2 rounded-lg text-sm font-medium text-slate hover:bg-blue/30 hover:text-dark transition-all duration-200"
+                      >
+                        Regras de Preço
+                      </Link>
+                    </>
                   )}
                   <Link
                     to="/minha-conta"

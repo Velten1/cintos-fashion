@@ -8,3 +8,5 @@ export { default as Profile } from './Profile';
 export { default as MinhaConta } from './MyAccount';
 export { default as Addresses } from './Addresses';
 export { default as AdminCreateProduct } from './AdminCreateProduct';
+export { default as AdminPriceRules } from './AdminPriceRules';
+export { default as AdminPriceRulesList } from './AdminPriceRulesList';
