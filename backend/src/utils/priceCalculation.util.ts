@@ -61,35 +61,71 @@ const findApplicablePriceRule = async (
   quantity: number,
   fabricType?: string
 ): Promise<{ price: number; rule: Prisma.PriceRuleGetPayload<{}> } | null> => {
-  // Construir condição para fabricType
-  // Se fabricType não for fornecido, busca regras com fabricType null
-  // Se fabricType for fornecido, busca regras com esse fabricType específico
-  
   // Buscar todas as regras que podem se aplicar
   // Uma regra se aplica se:
   // - minQuantity <= quantity (a quantidade está dentro ou acima do mínimo)
   // - E (maxQuantity é null OU maxQuantity >= quantity) (a quantidade está dentro ou abaixo do máximo)
+  // - E fabricType corresponde (se fornecido, busca específico; se não, busca null OU qualquer)
   
-  // Construir condição de fabricType
-  // Se fabricType não for fornecido, busca regras com fabricType null
-  const whereClause: Prisma.PriceRuleWhereInput = {
-    productId,
-    active: true,
-    fabricType: fabricType || null,
-    minQuantity: { lte: quantity },
-    OR: [
-      { maxQuantity: null },
-      { maxQuantity: { gte: quantity } },
-    ],
-  };
+  // Estratégia: Se fabricType não for fornecido, primeiro tenta buscar regras genéricas (fabricType: null)
+  // Se não encontrar, busca qualquer regra do produto (sem filtro de fabricType)
+  
+  let whereClause: Prisma.PriceRuleWhereInput;
+  
+  if (fabricType) {
+    // Se fabricType foi fornecido, busca apenas regras com esse fabricType específico
+    whereClause = {
+      productId,
+      active: true,
+      fabricType,
+      minQuantity: { lte: quantity },
+      OR: [
+        { maxQuantity: null },
+        { maxQuantity: { gte: quantity } },
+      ],
+    };
+  } else {
+    // Se fabricType não foi fornecido, busca regras genéricas (fabricType: null)
+    whereClause = {
+      productId,
+      active: true,
+      fabricType: null,
+      minQuantity: { lte: quantity },
+      OR: [
+        { maxQuantity: null },
+        { maxQuantity: { gte: quantity } },
+      ],
+    };
+  }
 
-  const priceRules = await prisma.priceRule.findMany({
+  let priceRules = await prisma.priceRule.findMany({
     where: whereClause,
     orderBy: {
       minQuantity: 'desc', // Pega a regra com maior minQuantity que se aplica
     },
     take: 1,
   });
+
+  // Se não encontrou regra genérica e fabricType não foi fornecido, buscar qualquer regra do produto
+  if (priceRules.length === 0 && !fabricType) {
+    whereClause = {
+      productId,
+      active: true,
+      minQuantity: { lte: quantity },
+      OR: [
+        { maxQuantity: null },
+        { maxQuantity: { gte: quantity } },
+      ],
+    };
+    
+    priceRules = await prisma.priceRule.findMany({
+      where: whereClause,
+      orderBy: {
+        minQuantity: 'desc',
+      },
+      take: 1,
+    });
+  }
 
   if (priceRules.length > 0) {
     return {
