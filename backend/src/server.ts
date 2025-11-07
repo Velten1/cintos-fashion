@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes";
 import productRoutes from "./routes/productRoutes";
 import addressRoutes from "./routes/addressRoutes";
 import priceRulesRoutes from "./routes/priceRulesRoutes";
+import cartRoutes from "./routes/cartRoutes";
 
 dotenv.config()
 
@@ -31,6 +32,9 @@ app.use('/api/addresses', addressRoutes)
 
 // Rotas de regras de preço
 app.use('/api/price-rules', priceRulesRoutes)
+
+// Rotas de carrinho
+app.use('/api/cart', cartRoutes)
 
 const PORT = process.env.PORT || 3001;
 

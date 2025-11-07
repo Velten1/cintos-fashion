@@ -7,7 +7,7 @@ import prisma from '../config/prisma';
 export interface PriceCalculationInput {
   productId: string;
   quantity: number;
-  characteristics?: any; // Características específicas (tamanho, dimensões, aro, etc.)
+  characteristics?: Record<string, unknown>; // Características específicas (tamanho, dimensões, aro, etc.)
   fabricType?: string; // Tipo de tecido (se aplicável)
 }
 
@@ -32,7 +32,7 @@ const ARO_ADJUSTMENTS = {
 /**
  * Verifica se o produto tem aro baseado nas características
  */
-const hasAro = (characteristics?: any): boolean => {
+const hasAro = (characteristics?: Record<string, unknown>): boolean => {
   if (!characteristics) {
     return false;
   }
@@ -49,12 +49,18 @@ const hasAro = (characteristics?: any): boolean => {
 
 /**
  * Busca e aplica PriceRule baseado na quantidade
+ * 
+ * A lógica garante que:
+ * - Quantidade <= 999: aplica regra com maxQuantity >= quantidade ou maxQuantity = null
+ * - Quantidade >= 1000: aplica regra com minQuantity <= quantidade e (maxQuantity >= quantidade ou maxQuantity = null)
+ * 
+ * Ordena por minQuantity desc para pegar a regra mais específica (maior minQuantity que se aplica)
  */
 const findApplicablePriceRule = async (
   productId: string,
   quantity: number,
   fabricType?: string
-): Promise<{ price: number; rule?: any } | null> => {
+): Promise<{ price: number; rule: Prisma.PriceRuleGetPayload<{}> } | null> => {
   const priceRules = await prisma.priceRule.findMany({
     where: {
       productId,
@@ -87,7 +93,7 @@ const findApplicablePriceRule = async (
  */
 const calculateAroAdjustment = (
   category: string,
-  characteristics?: any
+  characteristics?: Record<string, unknown>
 ): number => {
   if (!hasAro(characteristics)) {
     return 0;
