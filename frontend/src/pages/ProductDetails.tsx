@@ -152,6 +152,18 @@ const ProductDetails = () => {
 
   const imagens = produto.imagens && produto.imagens.length > 0 ? produto.imagens : [produto.imagem];
 
+  // Verificar se o produto é fabricado sob demanda (fivelas ou botões)
+  // Esses produtos não requerem estoque, pois são fabricados após o pedido
+  const isMadeToOrder = produto.categoria === 'fivelas' || produto.categoria === 'acessorios';
+  
+  // Para produtos fabricados sob demanda, aceitar estoque 0, null ou undefined
+  const hasAvailableStock = isMadeToOrder 
+    ? true 
+    : (produto.estoque ?? 0) > 0;
+  
+  // Quantidade máxima: para produtos fabricados sob demanda, não há limite baseado em estoque
+  const maxQuantity = isMadeToOrder ? 999999 : (produto.estoque ?? 0);
+
   return (
     <div className="min-h-screen py-8 lg:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -227,7 +239,12 @@ const ProductDetails = () => {
                   <span className="text-3xl font-bold text-dark">{formatarPreco(produto.preco)}</span>
                 )}
               </div>
-              {produto.estoque > 0 ? (
+              {isMadeToOrder ? (
+                <p className="text-blue-600 text-sm mt-2 font-medium flex items-center gap-2">
+                  <FaCheckCircle className="text-blue-600" />
+                  Fabricado sob demanda
+                </p>
+              ) : produto.estoque > 0 ? (
                 <p className="text-green-600 text-sm mt-2 font-medium flex items-center gap-2">
                   <FaCheckCircle className="text-green-600" />
                   Em estoque ({produto.estoque} disponíveis)
@@ -267,17 +284,17 @@ const ProductDetails = () => {
                       <input
                         type="number"
                         min="1"
-                        max={produto.estoque}
+                        max={maxQuantity}
                         value={quantity}
                         onChange={(e) => {
                           const val = parseInt(e.target.value) || 1;
-                          setQuantity(Math.max(1, Math.min(val, produto.estoque)));
+                          setQuantity(Math.max(1, Math.min(val, maxQuantity)));
                         }}
                         className="w-16 px-2 py-2 text-center border-x border-blue/30 focus:outline-none focus:ring-2 focus:ring-dark"
                       />
                       <button
-                        onClick={() => setQuantity(Math.min(produto.estoque, quantity + 1))}
-                        disabled={quantity >= produto.estoque || addingToCart}
+                        onClick={() => setQuantity(Math.min(maxQuantity, quantity + 1))}
+                        disabled={quantity >= maxQuantity || addingToCart}
                         className="px-3 py-2 text-dark hover:bg-blue/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
                         +
@@ -285,10 +302,14 @@ const ProductDetails = () => {
                     </div>
                     <button
                       onClick={handleAddToCart}
-                      disabled={produto.estoque === 0 || addingToCart}
+                      disabled={!hasAvailableStock || addingToCart}
                       className="flex-1 px-6 py-4 bg-dark text-light rounded-xl font-semibold hover:bg-slate transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {addingToCart ? 'Adicionando...' : produto.estoque > 0 ? 'Adicionar ao Carrinho' : 'Fora de Estoque'}
+                      {addingToCart 
+                        ? 'Adicionando...' 
+                        : hasAvailableStock 
+                          ? 'Adicionar ao Carrinho' 
+                          : 'Fora de Estoque'}
                     </button>
                   </div>
                 </>

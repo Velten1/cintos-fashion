@@ -57,8 +57,11 @@ const Cart = () => {
     const item = cart?.items.find((i) => i.id === itemId);
     if (!item) return;
 
-    // Validar estoque
-    if (newQuantity > item.product.stock) {
+    // Verificar se o produto é fabricado sob demanda (fivelas ou botões)
+    const isMadeToOrder = item.product.category === 'BUCKLE' || item.product.category === 'ACCESSORIES';
+    
+    // Validar estoque apenas para produtos que não são fabricados sob demanda
+    if (!isMadeToOrder && newQuantity > item.product.stock) {
       setError(`Quantidade máxima disponível: ${item.product.stock}`);
       // Restaurar valor anterior
       setQuantityInputs((prev) => ({ ...prev, [itemId]: item.quantity }));
@@ -102,14 +105,17 @@ const Cart = () => {
     
     if (!item) return;
 
+    // Verificar se o produto é fabricado sob demanda (fivelas ou botões)
+    const isMadeToOrder = item.product.category === 'BUCKLE' || item.product.category === 'ACCESSORIES';
+
     // Se o valor mudou, atualizar
     if (inputValue !== undefined && inputValue !== item.quantity) {
       if (inputValue < 1) {
         // Restaurar valor mínimo
         setQuantityInputs((prev) => ({ ...prev, [itemId]: 1 }));
         handleUpdateQuantity(itemId, 1);
-      } else if (inputValue > item.product.stock) {
-        // Restaurar valor máximo
+      } else if (!isMadeToOrder && inputValue > item.product.stock) {
+        // Restaurar valor máximo apenas para produtos com estoque limitado
         setQuantityInputs((prev) => ({ ...prev, [itemId]: item.product.stock }));
         handleUpdateQuantity(itemId, item.product.stock);
       } else {
@@ -313,7 +319,7 @@ const Cart = () => {
                           <input
                             type="number"
                             min="1"
-                            max={item.product.stock}
+                            max={item.product.category === 'BUCKLE' || item.product.category === 'ACCESSORIES' ? 999999 : item.product.stock}
                             value={quantityInputs[item.id] ?? item.quantity}
                             onChange={(e) => handleQuantityInputChange(item.id, e.target.value)}
                             onBlur={() => handleQuantityInputBlur(item.id)}
@@ -327,7 +333,7 @@ const Cart = () => {
                               setQuantityInputs((prev) => ({ ...prev, [item.id]: newQty }));
                               handleUpdateQuantity(item.id, newQty);
                             }}
-                            disabled={isUpdating || (quantityInputs[item.id] ?? item.quantity) >= item.product.stock}
+                            disabled={isUpdating || ((item.product.category !== 'BUCKLE' && item.product.category !== 'ACCESSORIES') && (quantityInputs[item.id] ?? item.quantity) >= item.product.stock)}
                             className="p-2 text-dark hover:bg-blue/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
                             <FaPlus />

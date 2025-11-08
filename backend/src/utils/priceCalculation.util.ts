@@ -272,16 +272,29 @@ export const calculateTotalPrice = async (
 
 /**
  * Valida se a quantidade está dentro do estoque disponível
+ * 
+ * Nota: Produtos BUCKLE (fivelas) e ACCESSORIES (botões) são fabricados sob demanda
+ * e não requerem validação de estoque, pois a matéria-prima (tecido) vem do cliente.
  */
 export const validateStock = async (productId: string, quantity: number): Promise<boolean> => {
   const product = await prisma.product.findUnique({
     where: { id: productId },
-    select: { stock: true },
+    select: { 
+      stock: true,
+      category: true,
+    },
   });
 
   if (!product) {
     return false;
   }
 
+  // Fivelas (BUCKLE) e botões (ACCESSORIES) são fabricados sob demanda
+  // Não requerem validação de estoque
+  if (product.category === 'BUCKLE' || product.category === 'ACCESSORIES') {
+    return true;
+  }
+
+  // Para outros produtos (BELTS), validar estoque normalmente
   return quantity <= product.stock;
 };
