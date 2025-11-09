@@ -73,8 +73,8 @@ model User {
 model Product {
   id                  String  @id @default(uuid())
   name                String
-  description         String?
-  descriptionComplete String? @map("description_complete")
+  description         String? @db.Text
+  descriptionComplete String? @map("description_complete") @db.Text
 
   //prices
   basePrice        Decimal  @map("base_price") @db.Decimal(10, 2)
