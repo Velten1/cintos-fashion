@@ -152,16 +152,18 @@ const ProductDetails = () => {
 
   const imagens = produto.imagens && produto.imagens.length > 0 ? produto.imagens : [produto.imagem];
 
-  // Verificar se o produto é fabricado sob demanda (fivelas ou botões)
-  // Esses produtos não requerem estoque, pois são fabricados após o pedido
-  const isMadeToOrder = produto.categoria === 'fivelas' || produto.categoria === 'acessorios';
+  // Verificar se o produto é fabricado sob demanda (fivelas ou botões SEM estoque)
+  // Um produto só é fabricado sob demanda se for fivela/botão E tiver estoque 0, null ou undefined
+  const isMadeToOrderCategory = produto.categoria === 'fivelas' || produto.categoria === 'acessorios';
+  const hasStock = (produto.estoque ?? 0) > 0;
+  const isMadeToOrder = isMadeToOrderCategory && !hasStock;
   
   // Para produtos fabricados sob demanda, aceitar estoque 0, null ou undefined
-  const hasAvailableStock = isMadeToOrder 
-    ? true 
-    : (produto.estoque ?? 0) > 0;
+  // Para produtos com estoque, validar normalmente
+  const hasAvailableStock = isMadeToOrder || hasStock;
   
   // Quantidade máxima: para produtos fabricados sob demanda, não há limite baseado em estoque
+  // Para produtos com estoque, limitar ao estoque disponível
   const maxQuantity = isMadeToOrder ? 999999 : (produto.estoque ?? 0);
 
   return (
