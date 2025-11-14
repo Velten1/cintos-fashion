@@ -10,6 +10,7 @@ import EditProductModal from '../components/EditProductModal';
 import ProductImages from '../components/ProductImages';
 import ProductCharacteristics from '../components/ProductCharacteristics';
 import RelatedProducts from '../components/RelatedProducts';
+import { useToast } from '../contexts/ToastContext';
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +25,7 @@ const ProductDetails = () => {
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -59,10 +61,18 @@ const ProductDetails = () => {
       });
 
       if (response.data.status === 201 || response.data.status === 200) {
-        const shouldGoToCart = window.confirm('Item adicionado ao carrinho! Deseja ir para o carrinho?');
-        if (shouldGoToCart) {
-          navigate('/carrinho');
-        }
+        // Disparar evento para atualizar badge do carrinho
+        window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { shouldAnimate: true } }));
+        
+        // Mostrar Toast ao invés de window.confirm
+        showToast(
+          'Item adicionado ao carrinho!',
+          'success',
+          {
+            label: 'Ver carrinho',
+            onClick: () => navigate('/carrinho')
+          }
+        );
       } else {
         setError(response.data.message || 'Erro ao adicionar item ao carrinho');
       }

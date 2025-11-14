@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaTrash, FaPlus, FaMinus, FaShoppingCart, FaInfoCircle } from 'react-icons/fa';
 import { getCart, updateItemQuantity, removeItem, clearCart, getCartTotal, type Cart as CartType, type CartItem } from '../services/cartServices';
 import { formatarPreco } from '../utils';
+import { useToast } from '../contexts/ToastContext';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const Cart = () => {
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [clearing, setClearing] = useState(false);
   const [quantityInputs, setQuantityInputs] = useState<Record<string, number>>({});
+  const { showToast } = useToast();
 
   // Carregar carrinho e total
   useEffect(() => {
@@ -134,14 +136,15 @@ const Cart = () => {
   };
 
   const handleRemoveItem = async (itemId: string) => {
-    if (!window.confirm('Deseja remover este item do carrinho?')) return;
-
     try {
       setUpdatingItems((prev) => new Set(prev).add(itemId));
       const response = await removeItem(itemId);
 
       if (response.data.status === 200) {
         await loadCart();
+        // Disparar evento para atualizar badge do carrinho
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+        showToast('Item removido do carrinho', 'success');
       } else {
         setError(response.data.message || 'Erro ao remover item');
       }
@@ -158,8 +161,6 @@ const Cart = () => {
   };
 
   const handleClearCart = async () => {
-    if (!window.confirm('Deseja limpar todo o carrinho? Esta ação não pode ser desfeita.')) return;
-
     try {
       setClearing(true);
       const response = await clearCart();
@@ -167,6 +168,9 @@ const Cart = () => {
       if (response.data.status === 200) {
         setCart(null);
         setTotal(0);
+        // Disparar evento para atualizar badge do carrinho
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+        showToast('Carrinho limpo com sucesso', 'success');
       } else {
         setError(response.data.message || 'Erro ao limpar carrinho');
       }

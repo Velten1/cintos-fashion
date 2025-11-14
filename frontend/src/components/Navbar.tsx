@@ -11,6 +11,28 @@ const Navbar = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [cartItemsCount, setCartItemsCount] = useState(0);
+  const [badgePulse, setBadgePulse] = useState(false);
+
+  const loadCartCount = async (shouldAnimate = false) => {
+    try {
+      const response = await getCart();
+      if (response.data.status === 200 && response.data.data) {
+        const cart = response.data.data as { items?: unknown[] };
+        const newCount = cart.items?.length || 0;
+        const oldCount = cartItemsCount;
+        
+        // Se o count aumentou, animar o badge
+        if (shouldAnimate && newCount > oldCount) {
+          setBadgePulse(true);
+          setTimeout(() => setBadgePulse(false), 500);
+        }
+        
+        setCartItemsCount(newCount);
+      }
+    } catch (error) {
+      // Ignorar erros ao carregar carrinho
+    }
+  };
 
   useEffect(() => {
     const checkUser = async () => {
@@ -32,19 +54,18 @@ const Navbar = () => {
       }
     };
     checkUser();
-  }, []);
 
-  const loadCartCount = async () => {
-    try {
-      const response = await getCart();
-      if (response.data.status === 200 && response.data.data) {
-        const cart = response.data.data as { items?: unknown[] };
-        setCartItemsCount(cart.items?.length || 0);
-      }
-    } catch (error) {
-      // Ignorar erros ao carregar carrinho
-    }
-  };
+    // Escutar evento de atualização do carrinho
+    const handleCartUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      loadCartCount(customEvent.detail?.shouldAnimate || false);
+    };
+
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+    };
+  }, []);
 
   const navLinks = [
     { path: '/', label: 'Início' },
@@ -100,7 +121,7 @@ const Navbar = () => {
                 >
                   <FaShoppingCart className="text-xl" />
                   {cartItemsCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className={`absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center ${badgePulse ? 'animate-pulse-badge' : ''}`}>
                       {cartItemsCount > 9 ? '9+' : cartItemsCount}
                     </span>
                   )}
