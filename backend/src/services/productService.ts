@@ -101,34 +101,29 @@ const validateUnknownFields = (productData: any): string[] => {
 };
 
 export const getProductsService = async (filters: any = {}, pagination: any = {}, sort: any = {}, isAdmin: boolean = false) => {
-  try {
-    const page = Math.max(1, parseInt(pagination.page || '1', 10));
-    const limit = Math.min(100, Math.max(1, parseInt(pagination.limit || '12', 10)));
-    const skip = (page - 1) * limit;
+  const page = Math.max(1, parseInt(pagination.page || '1', 10));
+  const limit = Math.min(100, Math.max(1, parseInt(pagination.limit || '12', 10)));
+  const skip = (page - 1) * limit;
 
-    const [products, total] = await Promise.all([
-      getAllProducts(buildWhereClause(filters, isAdmin), buildOrderBy(sort.sort), skip, limit),
-      getProductsCount(buildWhereClause(filters, isAdmin)),
-    ]);
+  const [products, total] = await Promise.all([
+    getAllProducts(buildWhereClause(filters, isAdmin), buildOrderBy(sort.sort), skip, limit),
+    getProductsCount(buildWhereClause(filters, isAdmin)),
+  ]);
 
-    return {
-      status: 200,
-      data: {
-        products,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-          hasNextPage: page < Math.ceil(total / limit),
-          hasPreviousPage: page > 1,
-        },
+  return {
+    status: 200,
+    data: {
+      products,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPreviousPage: page > 1,
       },
-    };
-  } catch (error: any) {
-    console.error('Erro ao buscar produtos:', error);
-    return { status: 500, message: 'Erro ao buscar produtos. Tente novamente mais tarde.' };
-  }
+    },
+  };
 };
 
 export const getProductByIdService = async (id: string, isAdmin: boolean = false) => {
@@ -136,21 +131,16 @@ export const getProductByIdService = async (id: string, isAdmin: boolean = false
     return { status: 400, message: 'ID do produto inválido.' };
   }
 
-  try {
-    const product = await getProductById(id);
-    if (!product) {
-      return { status: 404, message: 'Produto não encontrado.' };
-    }
-
-    if (!isAdmin && !product.active) {
-      return { status: 404, message: 'Produto não encontrado.' };
-    }
-
-    return { status: 200, data: product };
-  } catch (error: any) {
-    console.error('Erro ao buscar produto:', error);
-    return { status: 500, message: 'Erro ao buscar produto. Tente novamente mais tarde.' };
+  const product = await getProductById(id);
+  if (!product) {
+    return { status: 404, message: 'Produto não encontrado.' };
   }
+
+  if (!isAdmin && !product.active) {
+    return { status: 404, message: 'Produto não encontrado.' };
+  }
+
+  return { status: 200, data: product };
 };
 
 export const createProductService = async (productData: any) => {

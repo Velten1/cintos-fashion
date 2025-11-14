@@ -126,13 +126,8 @@ export const getPriceRulesByProductService = async (productId: string) => {
     return { status: 404, message: 'Produto não encontrado.' };
   }
 
-  try {
-    const priceRules = await getPriceRulesByProductId(productId);
-    return { status: 200, data: priceRules };
-  } catch (error: any) {
-    console.error('Erro ao buscar regras de preço:', error);
-    return { status: 500, message: 'Erro ao buscar regras de preço. Tente novamente mais tarde.' };
-  }
+  const priceRules = await getPriceRulesByProductId(productId);
+  return { status: 200, data: priceRules };
 };
 
 /**
@@ -153,13 +148,8 @@ export const getAllPriceRulesByProductService = async (productId: string) => {
     return { status: 404, message: 'Produto não encontrado.' };
   }
 
-  try {
-    const priceRules = await getAllPriceRulesByProductId(productId);
-    return { status: 200, data: priceRules };
-  } catch (error: any) {
-    console.error('Erro ao buscar regras de preço:', error);
-    return { status: 500, message: 'Erro ao buscar regras de preço. Tente novamente mais tarde.' };
-  }
+  const priceRules = await getAllPriceRulesByProductId(productId);
+  return { status: 200, data: priceRules };
 };
 
 /**
@@ -170,16 +160,11 @@ export const getPriceRuleByIdService = async (id: string) => {
     return { status: 400, message: 'ID da regra de preço inválido.' };
   }
 
-  try {
-    const priceRule = await getPriceRuleById(id);
-    if (!priceRule) {
-      return { status: 404, message: 'Regra de preço não encontrada.' };
-    }
-    return { status: 200, data: priceRule };
-  } catch (error: any) {
-    console.error('Erro ao buscar regra de preço:', error);
-    return { status: 500, message: 'Erro ao buscar regra de preço. Tente novamente mais tarde.' };
+  const priceRule = await getPriceRuleById(id);
+  if (!priceRule) {
+    return { status: 404, message: 'Regra de preço não encontrada.' };
   }
+  return { status: 200, data: priceRule };
 };
 
 /**

@@ -34,13 +34,8 @@ export const getAllAddressesService = async (userId: string) => {
     return { status: 400, message: 'ID do usuário inválido.' };
   }
 
-  try {
-    const addresses = await getAllAddressesByUserId(userId);
-    return { status: 200, data: addresses };
-  } catch (error: any) {
-    console.error('Erro ao buscar endereços:', error);
-    return { status: 500, message: 'Erro ao buscar endereços. Tente novamente mais tarde.' };
-  }
+  const addresses = await getAllAddressesByUserId(userId);
+  return { status: 200, data: addresses };
 };
 
 /**
@@ -54,19 +49,13 @@ export const getAddressByIdService = async (id: string, userId: string) => {
   if (!validateUUID(userId)) {
     return { status: 400, message: 'ID do usuário inválido.' };
   }
-
-  try {
-    const address = await getAddressById(id, userId);
-    if (!address) {
-      return { status: 404, message: 'Endereço não encontrado.' };
-    }
-    return { status: 200, data: address };
-  } catch (error: any) {
-    console.error('Erro ao buscar endereço:', error);
-    return { status: 500, message: 'Erro ao buscar endereço. Tente novamente mais tarde.' };
+  
+  const address = await getAddressById(id, userId);
+  if (!address) {
+    return { status: 404, message: 'Endereço não encontrado.' };
   }
+  return { status: 200, data: address };
 };
-
 /**
  * Cria um novo endereço
  */
