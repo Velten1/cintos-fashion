@@ -138,13 +138,15 @@ export const validateCNPJReceitaFederal = async (cnpj: string): Promise<{ exists
  */
 export const validateCNPJWithAPI = async (cnpj: string): Promise<{ exists: boolean; isActive: boolean; data?: CNPJValidationData }> => {
   // Tenta OpenCNPJ primeiro (mais rápido e gratuito)
-  const openCNPJResult = await validateCNPJExists(cnpj);
+  const openCNPJResult = await validateCNPJReceitaFederal(cnpj);
   
   if (openCNPJResult.exists) {
     return openCNPJResult;
   }
   
   // Se OpenCNPJ falhou, tenta Receita Federal (pode ser mais lento)
-  return await validateCNPJReceitaFederal(cnpj);
+  return await validateCNPJExists(cnpj);
 };
+
+
 

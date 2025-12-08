@@ -78,7 +78,7 @@ export const registerUserService = async (
     return { status: 201, data: userWithoutPassword}
 }
 
-export const  loginUserService = async(
+export const loginUserService = async(
     email: string,
     password: string
 ) => {
