@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { loginUserService, registerUserService, editUserService } from "../services/authService";
-import { findUserById } from "../repository/authRepository";
+import { findUserById, generateToken } from "../repository/authRepository";
 
 export const registerUserController = async (req: Request, res: Response) => {
     try {
@@ -123,6 +123,41 @@ export const editUserController = async (req: Request, res: Response) => {
         }
 
         return res.status(500).json({ message: "Erro ao atualizar usuário", error: error.message })
+    }
+}
+
+export const renewTokenController = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).userId
+        if (!userId) {
+            return res.status(401).json({ message: "Token não fornecido" })
+        }
+
+        // Verificar se o usuário existe
+        const user = await findUserById(userId)
+        if (!user) {
+            return res.status(404).json({ message: "Usuário não encontrado" })
+        }
+
+        // Gerar novo token
+        const newToken = await generateToken(userId)
+
+        // Atualizar cookie com o novo token
+        res.cookie('token', newToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 3600000 // 1 hora
+        });
+
+        return res.status(200).json({ 
+            status: 200, 
+            message: 'Token renovado com sucesso',
+            data: { token: newToken }
+        })
+    } catch (error: any) {
+        console.error("Erro ao renovar token", error)
+        return res.status(500).json({ message: "Erro ao renovar token", error: error.message })
     }
 }
 

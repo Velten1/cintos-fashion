@@ -1,5 +1,5 @@
 import  express  from "express";
-import { loginUserController, registerUserController, getUserController, logoutController, editUserController } from "../controllers/authController"
+import { loginUserController, registerUserController, getUserController, logoutController, editUserController, renewTokenController } from "../controllers/authController"
 import authMiddleware from "../middleware/authMiddleware"
 
 const router = express.Router()
@@ -7,6 +7,7 @@ const router = express.Router()
 router.post('/register', registerUserController)
 router.post('/login', loginUserController)
 router.post('/logout', logoutController)
+router.post('/renew-token', authMiddleware, renewTokenController)
 router.get('/me', authMiddleware, getUserController)
 router.put('/me', authMiddleware, editUserController)
 
