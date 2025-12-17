@@ -66,6 +66,7 @@ model User {
   notifications Notification[]
   addresses     Address[]
   cart          Cart?
+  supportMessages SupportMessage[]
 
   @@map("users")
 }
@@ -266,4 +267,19 @@ model CartItem {
 
   @@unique([cartId, productId]) // Um produto só pode aparecer uma vez no carrinho
   @@map("cart_items")
+}
+
+model SupportMessage {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  subject   String
+  message   String   @db.Text
+  status    String   @default("pending")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("support_messages")
 }
