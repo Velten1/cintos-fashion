@@ -107,12 +107,12 @@ const Navbar = () => {
           </div>
 
           {/* Search Bar - Desktop */}
-          <div className="hidden lg:block w-80">
+          <div className="hidden lg:block w-80 flex-shrink-0">
             <SearchBar />
           </div>
 
           {/* Auth Buttons - Desktop */}
-          <div className="hidden md:flex items-center gap-3 ml-4">
+          <div className="hidden md:flex items-center gap-3 ml-auto">
             {isAuthenticated && (
               <>
                 <Link
@@ -129,14 +129,20 @@ const Navbar = () => {
                 {isAdmin && (
                   <>
                     <Link
+                      to="/admin/painel"
+                      className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors whitespace-nowrap"
+                    >
+                      Painel
+                    </Link>
+                    <Link
                       to="/admin/produtos/cadastrar"
-                      className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors"
+                      className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors whitespace-nowrap"
                     >
                       Cadastrar Produtos
                     </Link>
                     <Link
                       to="/admin/regras-preco"
-                      className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors"
+                      className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors whitespace-nowrap"
                     >
                       Regras de Preço
                     </Link>
@@ -144,7 +150,7 @@ const Navbar = () => {
                 )}
                 <Link
                   to="/minha-conta"
-                  className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-slate hover:text-dark transition-colors whitespace-nowrap"
                 >
                   Minha Conta
                 </Link>
@@ -288,4 +294,5 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
 
