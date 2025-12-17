@@ -7,7 +7,6 @@ import {
   FaHeadset,
   FaStar,
   FaHeart,
-  FaWallet,
 } from 'react-icons/fa';
 
 const MinhaConta = () => {
@@ -57,26 +56,22 @@ const MinhaConta = () => {
       description: 'Consulte sua lista de produtos favoritados.',
       color: 'from-red-500 to-red-600',
     },
-    {
-      id: 'carteira',
-      label: 'Carteira',
-      icon: FaWallet,
-      description: 'Gerencie seus cartões, créditos e métodos de pagamento.',
-      color: 'from-indigo-500 to-indigo-600',
-    },
   ];
 
   const handleMenuItemClick = (id: string) => {
-    if (id === 'dados') {
-      navigate('/perfil');
-      return;
+    const routes: Record<string, string> = {
+      pedidos: '/minha-conta/pedidos',
+      dados: '/perfil',
+      endereco: '/minha-conta/enderecos',
+      atendimento: '/minha-conta/atendimento',
+      avaliacoes: '/minha-conta/avaliacoes',
+      favoritos: '/minha-conta/favoritos',
+    };
+
+    const route = routes[id];
+    if (route) {
+      navigate(route);
     }
-    if (id === 'endereco') {
-      navigate('/minha-conta/enderecos');
-      return;
-    }
-    // Outras seções mostram mensagem de desenvolvimento
-    setSelectedSection(id);
   };
 
   return (
